@@ -1,0 +1,25 @@
+.PHONY: all build test clean configure link
+
+all: test
+
+configure:
+	cmake -B build
+
+build: configure
+	cmake --build build
+
+test: build
+	ctest --test-dir build --output-on-failure
+
+link: build
+ifeq ($(shell uname -s),Linux)
+	fusermount -u tmp || true
+	rm -rf tmp || true
+	mkdir -p tmp
+	./build/succinct_filesystem tmp
+else
+	@echo "FUSE filesystem can only be linked on Linux systems"
+endif
+
+clean:
+	rm -rf build
