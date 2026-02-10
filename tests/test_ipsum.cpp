@@ -1,4 +1,6 @@
-/*
+/**
+ * This file is part of the Succinct Filesystem project.
+ * 
  * Copyright (c) 2026 Sebastian Brunnert <mail@sebastianbrunnert.de>
  * SPDX-License-Identifier: GPL-2.0-only
  */
