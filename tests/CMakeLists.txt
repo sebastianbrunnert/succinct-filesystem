@@ -13,7 +13,12 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
     get_filename_component(TEST_NAME ${TEST_SOURCE} NAME_WE)
     
     # Create executable for each test file
-    add_executable(${TEST_NAME} ${TEST_SOURCE})
+    add_executable(${TEST_NAME} 
+        ${TEST_SOURCE}
+        ${CMAKE_SOURCE_DIR}/src/bitvector/array_bitvector.cpp
+        ${CMAKE_SOURCE_DIR}/src/bitvector/word_bitvector.cpp
+    )
+    
     target_link_libraries(${TEST_NAME} GTest::gtest_main)
     
     # Automatically discover and register tests with CTest
