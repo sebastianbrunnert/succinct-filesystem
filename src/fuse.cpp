@@ -48,18 +48,6 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
 }
 
 /**
- * This function is called when the contents of a directory are being read.
- * 
- * @param req The request handle that contains information about the readdir request and is used to send the response back to the kernel.
- * @param ino The inode number of the directory whose contents are being read.
- * @param size The size of the buffer provided for reading the directory entries.
- * @param off The offset within the directory entries from which to start reading.
- * @param fi Internal file information.
- */
-static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
-}
-
-/**
  * This function is called when a file is being opened.
  * 
  * @param req The request handle that contains information about the open request and is used to send the response back to the kernel.
@@ -81,15 +69,27 @@ static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
 static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
 }
 
+/**
+ * This function is called when the contents of a directory are being read.
+ * 
+ * @param req The request handle that contains information about the readdir request and is used to send the response back to the kernel.
+ * @param ino The inode number of the directory whose contents are being read.
+ * @param size The size of the buffer provided for reading the directory entries.
+ * @param off The offset within the directory entries from which to start reading.
+ * @param fi Internal file information.
+ */
+static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
+}
+
 // This structure defines the operation that our FUSE filesystem supports.
 static const struct fuse_lowlevel_ops flouds_operations = {
     .init = flouds_init,
     .destroy = flouds_destroy,
     .lookup = flouds_lookup,
     .getattr = flouds_getattr,
-    .readdir = flouds_readdir,
     .open = flouds_open,
-    .read = flouds_read
+    .read = flouds_read,
+    .readdir = flouds_readdir
 };
 
 /**
