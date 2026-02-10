@@ -16,7 +16,7 @@
  * @param userdata The user data passed to fuse_session_new()
  * @param conn Connection information about the FUSE session
  */
-static void fuse_init(void *userdata, struct fuse_conn_info *conn) {
+static void flouds_init(void *userdata, struct fuse_conn_info *conn) {
 }
 
 /**
@@ -24,7 +24,7 @@ static void fuse_init(void *userdata, struct fuse_conn_info *conn) {
  * 
  * @param userdata The user data passed to fuse_session_new()
  */
-static void fuse_destroy(void *userdata) {
+static void flouds_destroy(void *userdata) {
 }
 
 /**
@@ -34,7 +34,7 @@ static void fuse_destroy(void *userdata) {
  * @param parent The inode number of the parent directory where the lookup is being performed.
  * @param name The name of the entry being looked up within the parent directory.
  */
-static void fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
+static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
 }
 
 /**
@@ -44,7 +44,7 @@ static void fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
  * @param ino The inode number of the file or directory whose attributes are being requested.
  * @param fi Internal file information.
  */
-static void fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
 }
 
 /**
@@ -56,17 +56,40 @@ static void fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *
  * @param off The offset within the directory entries from which to start reading.
  * @param fi Internal file information.
  */
-static void fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
+static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
+}
+
+/**
+ * This function is called when a file is being opened.
+ * 
+ * @param req The request handle that contains information about the open request and is used to send the response back to the kernel.
+ * @param ino The inode number of the file being opened.
+ * @param fi Internal file information that can be used to store state about the open file.
+ */
+static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+}
+
+/**
+ * This function is called when the contents of a file are being read.
+ * 
+ * @param req The request handle that contains information about the read request and is used to send the response back to the kernel.
+ * @param ino The inode number of the file being read.
+ * @param size The size of the buffer provided for reading the file contents.
+ * @param off The offset within the file from which to start reading.
+ * @param fi Internal file information that can be used to store state about the open file.
+ */
+static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
 }
 
 // This structure defines the operation that our FUSE filesystem supports.
-static const struct fuse_low_level_ops fuse_operations = {
-    .init = fuse_init,
-    .destroy = fuse_destroy,
-    .lookup = fuse_lookup,
-    .getattr = fuse_getattr,
-    .readdir = fuse_readdir,
-    0
+static const struct fuse_low_level_ops flouds_operations = {
+    .init = flouds_init,
+    .destroy = flouds_destroy,
+    .lookup = flouds_lookup,
+    .getattr = flouds_getattr,
+    .readdir = flouds_readdir,
+    .open = flouds_open,
+    .read = flouds_read
 };
 
 /**
@@ -108,7 +131,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Create a new FUSE session with the parsed arguments and the defined operations.
-    se = fuse_session_new(&args, &fuse_operations, sizeof(fuse_operations), NULL);
+    se = fuse_session_new(&args, &flouds_operations, sizeof(flouds_operations), NULL);
 
     if(se == NULL) {
         // Session could not be created
