@@ -19,7 +19,7 @@ ifeq ($(shell uname -s),Linux)
 	fusermount -u tmp || true
 	rm -rf tmp || true
 	mkdir -p tmp
-	./build/succinct_filesystem tmp
+	./build/succinct_filesystem tmp.img tmp
 else
 	@echo "FUSE filesystem can only be linked on Linux systems"
 endif

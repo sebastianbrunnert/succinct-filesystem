@@ -17,6 +17,8 @@
  * @param conn Connection information about the FUSE session
  */
 static void flouds_init(void *userdata, struct fuse_conn_info *conn) {
+    const char *image_path = (const char*) userdata;    
+    printf("Loading filesystem from: %s\n", image_path);
 }
 
 /**
@@ -101,7 +103,21 @@ int main(int argc, char *argv[]) {
     struct fuse_session *se;
     struct fuse_cmdline_opts opts;
     struct fuse_loop_config *config;
+    const char *image_path = NULL;
     int ret = -1;
+
+    // Extract the image path (first non-option argument) before parsing cmdline
+    for (int i = 1; i < args.argc; i++) {
+        if (args.argv[i][0] != '-') {
+            image_path = args.argv[i];
+            // Remove this argument from args so fuse_parse_cmdline gets the mountpoint
+            for (int j = i; j < args.argc - 1; j++) {
+                args.argv[j] = args.argv[j + 1];
+            }
+            args.argc--;
+            break;
+        }
+    }
 
     // Parse the command line arguments. This will fill the opts structure with the relevant options for the FUSE session.
     if (fuse_parse_cmdline(&args, &opts) != 0) {
@@ -110,7 +126,7 @@ int main(int argc, char *argv[]) {
 
     if (opts.show_help) {
         // If the user requested help information, print it and exit.
-        printf("usage: %s [options] <mountpoint>\n\n", argv[0]);
+        printf("usage: %s [options] <image> <mountpoint>\n\n", argv[0]);
         fuse_cmdline_help();
         fuse_lowlevel_help();
         ret = 0;
@@ -122,16 +138,17 @@ int main(int argc, char *argv[]) {
         goto cleanup_args;
     }
 
-    if (opts.mountpoint == NULL) {
-        // If no mount point was provided, print usage information and exit.
-        printf("usage: %s [options] <mountpoint>\n", argv[0]);
+    if (image_path == NULL || opts.mountpoint == NULL) {
+        // If image or mount point was not provided, print usage information and exit.
+        printf("usage: %s [options] <image> <mountpoint>\n", argv[0]);
         printf("       %s --help\n", argv[0]);
         ret = 1;
         goto cleanup_args;
     }
 
     // Create a new FUSE session with the parsed arguments and the defined operations.
-    se = fuse_session_new(&args, &flouds_operations, sizeof(flouds_operations), NULL);
+    // Pass image_path as userdata so it is available in flouds_init
+    se = fuse_session_new(&args, &flouds_operations, sizeof(flouds_operations), image_path);
 
     if(se == NULL) {
         // Session could not be created
