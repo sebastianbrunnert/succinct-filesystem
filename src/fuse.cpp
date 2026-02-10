@@ -16,7 +16,7 @@
  * @param userdata The user data passed to fuse_session_new()
  * @param conn Connection information about the FUSE session
  */
-static void *fuse_init(void *userdata, struct fuse_conn_info *conn) {
+static void fuse_init(void *userdata, struct fuse_conn_info *conn) {
 }
 
 /**
@@ -65,7 +65,8 @@ static const struct fuse_low_level_ops fuse_operations = {
     .destroy = fuse_destroy,
     .lookup = fuse_lookup,
     .getattr = fuse_getattr,
-    .readdir = fuse_readdir
+    .readdir = fuse_readdir,
+    0
 };
 
 /**
