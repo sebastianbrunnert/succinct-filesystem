@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
 
     // Create a new FUSE session with the parsed arguments and the defined operations.
     // Pass image_path as userdata so it is available in flouds_init
-    se = fuse_session_new(&args, &flouds_operations, sizeof(flouds_operations), (const char*) image_path);
+    se = fuse_session_new(&args, &flouds_operations, sizeof(flouds_operations), (void*) image_path);
 
     if(se == NULL) {
         // Session could not be created
