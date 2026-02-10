@@ -4,7 +4,7 @@
  */
 
 // We use FUSE 3.18, which is the latest stable release as of February 2026.
-#define FUSE_USE_VERSION FUSE_MAKE_VERSION(3, 18)
+#define FUSE_USE_VERSION 31
 
 #include <fuse3/fuse_lowlevel.h>
 #include <stdio.h>
