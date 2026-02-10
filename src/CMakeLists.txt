@@ -7,7 +7,16 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
     return()
 endif()
 
-add_executable(succinct_filesystem fuse.cpp fuse.cpp)
+# Find FUSE3 library using pkg-config
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FUSE3 REQUIRED fuse3)
+
+add_executable(succinct_filesystem fuse.cpp)
+
+# Link FUSE3 library
+target_link_libraries(succinct_filesystem ${FUSE3_LIBRARIES})
+target_include_directories(succinct_filesystem PRIVATE ${FUSE3_INCLUDE_DIRS})
+target_compile_options(succinct_filesystem PRIVATE ${FUSE3_CFLAGS_OTHER})
 
 # Place the executable directly in build/ instead of build/src/
 set_target_properties(succinct_filesystem PROPERTIES
