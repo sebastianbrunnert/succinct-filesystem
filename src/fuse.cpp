@@ -7,24 +7,71 @@
 #define FUSE_USE_VERSION FUSE_MAKE_VERSION(3, 18)
 
 #include <fuse3/fuse_lowlevel.h>
+#include <stdio.h>
+#include <stddef.h>
 
-/*
- * This function is called when libfuse establishes a connection with the kernel.
+/**
+ * This function is called when the FUSE session is being initialized. It can be used to set up any necessary state or resources for the filesystem.
  * 
- * Parameters:
- * - userdata: A pointer to user-defined data that can be passed to the FUSE operations
- * - conn: A pointer to a structure containing information about the connection
+ * @param userdata The user data passed to fuse_session_new()
+ * @param conn Connection information about the FUSE session
  */
 static void *fuse_init(void *userdata, struct fuse_conn_info *conn) {
-    return NULL;
+    unimplemented();
+}
+
+/**
+ * This function is called when the FUSE session is being destroyed, either due to unmounting or an error.
+ * 
+ * @param userdata The user data passed to fuse_session_new()
+ */
+static void fuse_destroy(void *userdata) {
+    unimplemented();
+}
+
+/**
+ * This function is called when a content of a directory is being looked up.
+ * 
+ * @param req The request handle that contains information about the lookup request and is used to send the response back to the kernel.
+ * @param parent The inode number of the parent directory where the lookup is being performed.
+ * @param name The name of the entry being looked up within the parent directory.
+ */
+static void fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
+    unimplemented();
+}
+
+/**
+ * This function is called when the attributes of a file or directory are being requested.
+ * 
+ * @param req The request handle that contains information about the getattr request and is used to send the response back to the kernel.
+ * @param ino The inode number of the file or directory whose attributes are being requested.
+ * @param fi Internal file information.
+ */
+static void fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+    unimplemented();
+}
+
+/**
+ * This function is called when the contents of a directory are being read.
+ * 
+ * @param req The request handle that contains information about the readdir request and is used to send the response back to the kernel.
+ * @param ino The inode number of the directory whose contents are being read.
+ * @param size The size of the buffer provided for reading the directory entries.
+ * @param off The offset within the directory entries from which to start reading.
+ * @param fi Internal file information.
+ */
+static void fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
+    unimplemented();
 }
 
 // This structure defines the operation that our FUSE filesystem supports.
 static const struct fuse_low_level_ops fuse_operations = {
-    .init = fuse_init
+    .init = fuse_init,
+    .destroy = fuse_destroy,
+    .lookup = fuse_lookup,
 };
 
-/*
+/**
  * This is the main entry point of the FUSE filesystem. The main loop is started here.
  * The initialization is analogous to this default FUSE example: https://libfuse.github.io/doxygen/example_2hello__ll_8c.html
  */
@@ -49,7 +96,7 @@ int main(int argc, char *argv[]) {
         goto cleanup_args;
     } else if (opts.show_version) {
         // If the user requested version information, print it and exit.
-        fuse_cmdline_version();
+        fuse_lowlevel_version();
         ret = 0;
         goto cleanup_args;
     }
