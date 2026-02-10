@@ -4,7 +4,7 @@
  */
 
 // We use FUSE 3.18, which is the latest stable release as of February 2026.
-#define FUSE_USE_VERSION 31
+#define FUSE_USE_VERSION FUSE_MAKE_VERSION(3, 18)
 
 #include <fuse3/fuse_lowlevel.h>
 #include <stdio.h>
@@ -82,7 +82,7 @@ static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
 }
 
 // This structure defines the operation that our FUSE filesystem supports.
-static const struct fuse_low_level_ops flouds_operations = {
+static const struct fuse_lowlevel_ops flouds_operations = {
     .init = flouds_init,
     .destroy = flouds_destroy,
     .lookup = flouds_lookup,
