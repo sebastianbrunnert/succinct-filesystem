@@ -17,7 +17,6 @@
  * @param conn Connection information about the FUSE session
  */
 static void *fuse_init(void *userdata, struct fuse_conn_info *conn) {
-    unimplemented();
 }
 
 /**
@@ -26,7 +25,6 @@ static void *fuse_init(void *userdata, struct fuse_conn_info *conn) {
  * @param userdata The user data passed to fuse_session_new()
  */
 static void fuse_destroy(void *userdata) {
-    unimplemented();
 }
 
 /**
@@ -37,7 +35,6 @@ static void fuse_destroy(void *userdata) {
  * @param name The name of the entry being looked up within the parent directory.
  */
 static void fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
-    unimplemented();
 }
 
 /**
@@ -48,7 +45,6 @@ static void fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
  * @param fi Internal file information.
  */
 static void fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
-    unimplemented();
 }
 
 /**
@@ -61,7 +57,6 @@ static void fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *
  * @param fi Internal file information.
  */
 static void fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
-    unimplemented();
 }
 
 // This structure defines the operation that our FUSE filesystem supports.
@@ -69,6 +64,8 @@ static const struct fuse_low_level_ops fuse_operations = {
     .init = fuse_init,
     .destroy = fuse_destroy,
     .lookup = fuse_lookup,
+    .getattr = fuse_getattr,
+    .readdir = fuse_readdir
 };
 
 /**
