@@ -10,7 +10,7 @@
 #include "bitvector.hpp"
 
 extern "C" {
-#include "../../external/adaptive_dynamic_bitvector/hybridBV.h"
+    #include "../../external/adaptive_dynamic_bitvector/hybridBV.h"
 }
 
 /**

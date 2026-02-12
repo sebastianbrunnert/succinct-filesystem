@@ -19,6 +19,12 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
         ${CMAKE_SOURCE_DIR}/src/bitvector/word_bitvector.cpp
         ${CMAKE_SOURCE_DIR}/src/bitvector/saskeli_bitvector.cpp
         ${CMAKE_SOURCE_DIR}/src/bitvector/adaptive_bitvector.cpp
+        ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/hybridBV.c
+        ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/hybridId.c
+        ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/basics.c
+        ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/leafBV.c
+        ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/leafId.c
+        ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/staticBV.c
     )
     
     target_link_libraries(${TEST_NAME} GTest::gtest_main)
