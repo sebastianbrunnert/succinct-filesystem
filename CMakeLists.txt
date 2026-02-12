@@ -17,6 +17,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Source code
 add_subdirectory(src)
 
+# SIMD support
+add_compile_options(-mbmi2)
+
 # Testing
 find_package(GTest REQUIRED)
 enable_testing()

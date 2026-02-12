@@ -26,7 +26,11 @@ private:
     bv::bv saskeli;
 
 public:
-    SaskeliBitVectorStrategy(size_t n) : saskeli(n, false) {}
+    SaskeliBitVectorStrategy(size_t n) {
+        for (size_t i = 0; i < n; i++) {
+            saskeli.insert(i, false);
+        }
+    }
 
     void set(size_t position, bool value) override {
         if (position >= saskeli.size()) throw std::out_of_range("position out of range");
