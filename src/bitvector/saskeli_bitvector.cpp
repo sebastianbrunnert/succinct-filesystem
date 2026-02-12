@@ -58,16 +58,18 @@ public:
 
     size_t select1(size_t n) const override {
         if (n == 0) throw std::out_of_range("n must be greater than zero");
-        size_t sel = saskeli.select(n);
-        if (sel >= saskeli.size()-1 && saskeli.rank(saskeli.size()) < n) throw std::out_of_range("n exceeds number of 1-bits");
-        return sel;
+        if (saskeli.size() == 0 || saskeli.rank(saskeli.size()) < n) {
+            throw std::out_of_range("n exceeds number of 1-bits");
+        }
+        return saskeli.select(n);
     }
 
     size_t select0(size_t n) const override {
         if (n == 0) throw std::out_of_range("n must be greater than zero");
-        size_t sel = saskeli.select0(n);
-        if (sel >= saskeli.size()-1 && saskeli.rank0(saskeli.size()) < n) throw std::out_of_range("n exceeds number of 0-bits");
-        return sel;
+        if (saskeli.size() == 0 || saskeli.rank0(saskeli.size()) < n) {
+            throw std::out_of_range("n exceeds number of 0-bits");
+        }
+        return saskeli.select0(n);
     }
 
     void insert(size_t position, bool value) override {
