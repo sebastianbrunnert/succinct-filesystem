@@ -17,6 +17,7 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
         ${TEST_SOURCE}
         ${CMAKE_SOURCE_DIR}/src/bitvector/array_bitvector.cpp
         ${CMAKE_SOURCE_DIR}/src/bitvector/word_bitvector.cpp
+        ${CMAKE_SOURCE_DIR}/src/bitvector/saskeli_bitvector.cpp
     )
     
     target_link_libraries(${TEST_NAME} GTest::gtest_main)

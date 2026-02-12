@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <stdexcept>
+#include <iostream>
 
 /**
  * This class represents a dynamic 0-based bit sequence that can grow in size as needed.
@@ -100,22 +101,26 @@ public:
     virtual void remove(size_t position) = 0;
 
     /**
-     * Removes a range of bits starting at the specified position and spanning the given length.
-     * 
-     * @param position The 0-based position of the first bit to remove.
-     * @param length The number of bits to remove.
-     * @throws std::out_of_range if the range exceeds the size of the bit vector.
+     * Helper function to see the bits for debugging.
      */
-    virtual void remove_range(size_t position, size_t length) = 0;
+    friend std::ostream& operator<<(std::ostream& os, const BitVector& bv) {
+        for (size_t i = 0; i < bv.size(); i++) {
+            os << (bv.access(i) ? '1' : '0');
+        }
+        return os;
+    }
 
 };
 
 // Factory function to create a BitVector instance based on a specified strategy
-template <typename BitVectorStrategy> BitVector* create_bitvector(std::size_t n);
+template <typename BitVectorStrategy> BitVector* create_bitvector(size_t n);
 
 // Different strategies for implementing the interface
 class ArrayBitVectorStrategy;
-template <> BitVector* create_bitvector<ArrayBitVectorStrategy>(std::size_t n);
+template <> BitVector* create_bitvector<ArrayBitVectorStrategy>(size_t n);
 
 class WordBitVectorStrategy;
-template <> BitVector* create_bitvector<WordBitVectorStrategy>(std::size_t n);
+template <> BitVector* create_bitvector<WordBitVectorStrategy>(size_t n);
+
+class SaskeliBitVectorStrategy;
+template <> BitVector* create_bitvector<SaskeliBitVectorStrategy>(size_t n);

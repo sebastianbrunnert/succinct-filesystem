@@ -110,6 +110,20 @@ TEST_P(BitVectorTest, Insert) {
     EXPECT_EQ(bv->rank1(101), 2);
     EXPECT_EQ(bv->select1(2), 64);
     EXPECT_THROW(bv->insert(103, true), std::out_of_range);
+
+    bv = create_bitvector(129);
+    for(size_t i = 0; i < 129; i++) {
+        bv->set(i, true);
+    }
+    bv->insert(64, false);
+    EXPECT_EQ(bv->size(), 130);
+    for (size_t i = 0; i < 130; i++) {
+        if (i == 64) {
+            EXPECT_FALSE(bv->access(i));
+        } else {
+            EXPECT_TRUE(bv->access(i));
+        }
+    }
 }
 
 TEST_P(BitVectorTest, Remove) {
@@ -147,37 +161,12 @@ TEST_P(BitVectorTest, Remove) {
     }
 }
 
-TEST_P(BitVectorTest, RemoveRange) {
-    BitVector* bv = create_bitvector(10);
-    for (size_t i = 0; i < 10; i++) {
-        bv->set(i, i % 2 == 0);
-    }
-    bv->remove_range(3, 4);
-    EXPECT_EQ(bv->size(), 6);
-    EXPECT_TRUE(bv->access(0));
-    EXPECT_FALSE(bv->access(1));
-    EXPECT_TRUE(bv->access(2));
-    EXPECT_FALSE(bv->access(3));
-    EXPECT_TRUE(bv->access(4));
-    EXPECT_FALSE(bv->access(5));
-    EXPECT_THROW(bv->remove_range(5, 2), std::out_of_range);
-
-    bv = create_bitvector(100);
-    for (size_t i = 0; i < 100; i++) {
-        bv->set(i, i % 2 == 0);
-    }
-    bv->remove_range(10, 20);
-    EXPECT_EQ(bv->size(), 80);
-    for (size_t i = 0; i < 80; i++) {
-        EXPECT_EQ(bv->access(i), i % 2 == 0);
-    }
-}
-
 INSTANTIATE_TEST_SUITE_P(
     BitVectorStrategies,
     BitVectorTest,
     ::testing::Values(
         [](size_t n) { return create_bitvector<ArrayBitVectorStrategy>(n); },
-        [](size_t n) { return create_bitvector<WordBitVectorStrategy>(n); }
+        [](size_t n) { return create_bitvector<WordBitVectorStrategy>(n); },
+        [](size_t n) { return create_bitvector<SaskeliBitVectorStrategy>(n); }
     )
 );

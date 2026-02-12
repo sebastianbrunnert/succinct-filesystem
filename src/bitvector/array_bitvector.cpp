@@ -57,7 +57,7 @@ public:
     size_t select1(size_t n) const override {
         if (n == 0) throw std::out_of_range("n must be greater than zero");
         size_t count = 0;
-        for (size_t i = 0; i < bits.size(); ++i) {
+        for (size_t i = 0; i < bits.size(); i++) {
             if (bits[i]) ++count;
             if (count == n) return i;
         }
@@ -67,7 +67,7 @@ public:
     size_t select0(size_t n) const override {
         if (n == 0) throw std::out_of_range("n must be greater than zero");
         size_t count = 0;
-        for (size_t i = 0; i < bits.size(); ++i) {
+        for (size_t i = 0; i < bits.size(); i++) {
             if (!bits[i]) ++count;
             if (count == n) return i;
         }
@@ -82,11 +82,6 @@ public:
     void remove(size_t position) override {
         if (position >= bits.size()) throw std::out_of_range("position out of range");
         bits.erase(bits.begin() + position);
-    }
-
-    void remove_range(size_t position, size_t length) override {
-        if (position >= bits.size() || position + length > bits.size()) throw std::out_of_range("position out of range");
-        bits.erase(bits.begin() + position, bits.begin() + position + length);
     }
 };
 

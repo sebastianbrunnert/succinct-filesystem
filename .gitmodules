@@ -1,0 +1,3 @@
+[submodule "external/saskeli_bit_vector"]
+	path = external/saskeli_bit_vector
+	url = https://github.com/saskeli/bit_vector
