@@ -1,3 +1,6 @@
 [submodule "external/saskeli_bit_vector"]
 	path = external/saskeli_bit_vector
 	url = https://github.com/saskeli/bit_vector
+[submodule "external/adaptive_dynamic_bitvector"]
+	path = external/adaptive_dynamic_bitvector
+	url = https://github.com/gonzalonavarro/AdaptiveDynamicBitvectors
