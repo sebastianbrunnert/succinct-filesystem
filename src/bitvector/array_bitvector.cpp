@@ -13,11 +13,6 @@
  * Plain array-based implementation of the BitVector interface.
  * 
  * This implementation stores bits in a std::vector<bool> and provides straightforward implementations of all BitVector operations.
- * Performance:
- * - size, set and access: O(1)
- * - rank0, rank1, select0 and select1: O(n)
- * - insert, remove, remove_range: O(n)
- * 
  * It is not optimized for space or speed, but is primrily intended for testing.
  */
 class ArrayBitVectorStrategy : public BitVector {

@@ -6,11 +6,14 @@
  */
 
 #include "bitvector.hpp"
-#include "../../external/saskeli_bit_vector/bit_vector/bv.hpp"
 #include <stdexcept>
 
+#if defined(__i386__) || defined(__x86_64__)
+#include "../../external/saskeli_bit_vector/bit_vector/bv.hpp"
+
 /**
- * Fast dynamic bit vector implementtion based:
+ * Partial sum dynamic bitvector implementtion based on:
+ * 
  * @INPROCEEDINGS{9810697,
  * author={Dönges, Saska and Puglisi, Simon J. and Raman, Rajeev},
  * booktitle={2022 Data Compression Conference (DCC)}, 
@@ -24,7 +27,6 @@
 class SaskeliBitVectorStrategy : public BitVector {
 private:
     bv::bv saskeli;
-
 public:
     SaskeliBitVectorStrategy(size_t n) {
         for (size_t i = 0; i < n; i++) {
@@ -82,8 +84,14 @@ public:
         saskeli.remove(position);
     }
 };
+#endif
 
 template <>
 BitVector* create_bitvector<SaskeliBitVectorStrategy>(std::size_t n) {
-    return new SaskeliBitVectorStrategy(n);
+    #if defined(__i386__) || defined(__x86_64__)
+        return new SaskeliBitVectorStrategy(n);
+    #else
+        std::cerr << "SaskeliBitVectorStrategy is only supported on x86 architectures. Falling back to ArrayBitVectorStrategy." << std::endl;
+        return create_bitvector<ArrayBitVectorStrategy>(n);
+    #endif
 }

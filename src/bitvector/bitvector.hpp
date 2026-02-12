@@ -124,3 +124,6 @@ template <> BitVector* create_bitvector<WordBitVectorStrategy>(size_t n);
 
 class SaskeliBitVectorStrategy;
 template <> BitVector* create_bitvector<SaskeliBitVectorStrategy>(size_t n);
+
+class AdaptiveDynamicBitVectorStrategy;
+template <> BitVector* create_bitvector<AdaptiveDynamicBitVectorStrategy>(size_t n);

@@ -3,4 +3,4 @@
 	url = https://github.com/saskeli/bit_vector
 [submodule "external/adaptive_dynamic_bitvector"]
 	path = external/adaptive_dynamic_bitvector
-	url = https://github.com/gonzalonavarro/AdaptiveDynamicBitvectors
+	url = https://github.com/sebastianbrunnert/AdaptiveDynamicBitvectors

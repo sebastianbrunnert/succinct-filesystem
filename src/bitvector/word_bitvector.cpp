@@ -11,12 +11,7 @@
 
 /**
  * Improved implementation of the BitVector interface.
- * 
  * This implemenation stores bits in a vector of machine words and implements the BitVector operations using SIMD operations on these words.
- * Performance:
- * - size, set and access: O(1)
- * - rank0, rank1, select0 and select1: O(n) (but much faster than the array-based implementation due to SIMD)
- * - insert, remove, remove_range: O(n)
  */
 class WordBitVectorStrategy : public BitVector {
 private:
@@ -25,7 +20,7 @@ private:
 
 public:
     WordBitVectorStrategy(size_t n) : num_bits(n), words((n + sizeof(size_t) * 8 - 1) / (sizeof(size_t) * 8), 0) {};
-
+    
     void set(size_t position, bool value) override {
         if (position >= num_bits) throw std::out_of_range("position out of range");
         words[position / 64] |= (1ull << (position % 64));

@@ -167,6 +167,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(
         [](size_t n) { return create_bitvector<ArrayBitVectorStrategy>(n); },
         [](size_t n) { return create_bitvector<WordBitVectorStrategy>(n); },
-        [](size_t n) { return create_bitvector<SaskeliBitVectorStrategy>(n); }
+        [](size_t n) { return create_bitvector<SaskeliBitVectorStrategy>(n); },
+        [](size_t n) { return create_bitvector<AdaptiveDynamicBitVectorStrategy>(n); }
     )
 );
