@@ -112,7 +112,13 @@ public:
 
 };
 
-// Factory function to create a BitVector instance based on a specified strategy
+/**
+ * Factory function to create a BitVector instance based on a specified strategy.
+ * 
+ * @param BitVectorStrategy The strategy to use for the BitVector implementation.
+ * @param n The initial size of the BitVector.
+ * @return A pointer to a new BitVector instance.
+ */
 template <typename BitVectorStrategy> BitVector* create_bitvector(size_t n);
 
 // Different strategies for implementing the interface

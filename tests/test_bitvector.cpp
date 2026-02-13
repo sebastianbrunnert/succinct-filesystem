@@ -165,9 +165,9 @@ INSTANTIATE_TEST_SUITE_P(
     BitVectorStrategies,
     BitVectorTest,
     ::testing::Values(
-        [](size_t n) { return create_bitvector<ArrayBitVectorStrategy>(n); },
-        [](size_t n) { return create_bitvector<WordBitVectorStrategy>(n); },
-        [](size_t n) { return create_bitvector<SaskeliBitVectorStrategy>(n); },
-        [](size_t n) { return create_bitvector<AdaptiveDynamicBitVectorStrategy>(n); }
+        std::function<BitVector*(size_t)>([](size_t n) { return create_bitvector<ArrayBitVectorStrategy>(n); }),
+        std::function<BitVector*(size_t)>([](size_t n) { return create_bitvector<WordBitVectorStrategy>(n); }),
+        std::function<BitVector*(size_t)>([](size_t n) { return create_bitvector<SaskeliBitVectorStrategy>(n); }),
+        std::function<BitVector*(size_t)>([](size_t n) { return create_bitvector<AdaptiveDynamicBitVectorStrategy>(n); })
     )
 );
