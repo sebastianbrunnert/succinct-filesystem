@@ -38,16 +38,18 @@ public:
     size_t rank1(size_t position) const override {
         if (position >= num_bits) throw std::out_of_range("position out of range");
 
+        printf("Calculating rank1 for position %zu\n", position);
+
         size_t count = 0;
-        size_t full_words = position / 64;
-        size_t remaining_bits = position % 64;
+        size_t full_words = (position + 1) / 64;
+        size_t remaining_bits = (position + 1) % 64;
 
         for(size_t i = 0; i < full_words; i++) {
             count += __builtin_popcountll(words[i]);
         }
 
         if (remaining_bits > 0) {
-            count += __builtin_popcountll(words[full_words] & ((1ull << (remaining_bits + 1)) - 1));
+            count += __builtin_popcountll(words[full_words] & ((1ull << remaining_bits) - 1));
         }
 
         return count;
@@ -141,10 +143,14 @@ public:
         for(size_t i = words.size() - 1; i > word_index; i--) {
             words[i] = (words[i] << 1) | (words[i-1] >> 63);
         }
+        
+        size_t mask = (1ull << bit_index) - 1;
+        size_t high_bits = words[word_index] & ~mask;
+        size_t low_bits = words[word_index] & mask;        
+        words[word_index] = low_bits | (high_bits << 1);
+        
         if (value) {
             words[word_index] |= (1ull << bit_index);
-        } else {
-            words[word_index] &= ~(1ull << bit_index);
         }
     }
 

@@ -71,11 +71,10 @@ public:
      */
     uint8_t access(size_t position) const {
         if (position >= size()) throw std::out_of_range("position out of range");
-        bool root_bit = root_bv->access(position);
-        if (!root_bit) {
-            return left_bv->access(root_bv->rank0(position) - 1) ? 1 : 0;
-        } else {
+        if (root_bv->access(position)) {
             return right_bv->access(root_bv->rank1(position) - 1) ? 3 : 2;
+        } else {
+            return left_bv->access(root_bv->rank0(position) - 1) ? 1 : 0;
         }
     }
 
@@ -91,25 +90,29 @@ public:
     /**
      * Gets the number of occurrences of the specified symbol in the wavelet tree up to and including the specified position.
      * 
+     * @param symbol The symbol for which to count the occurrences. Must be in the range [0, 3].
      * @param position The position up to which to count the occurrences of the symbol.
-     * @param symbol The symbol for which to count the occurrences.
      * @return The number of the specified symbol in the wavelet tree up to and including the specified position.
      * @throws std::out_of_range if the position exceeds the size of the wavelet tree.
      */
-    size_t rank(size_t position, uint8_t symbol) const {
+    size_t rank(uint8_t symbol, size_t position) const {
         if (position >= size()) throw std::out_of_range("position out of range");
-        bool root_bit = symbol >= 2;
-        if (!root_bit) {
+        
+        if (symbol < 2) {
+            size_t root_rank = root_bv->rank0(position);
+            if (root_rank == 0) return 0;
             if (symbol == 0) {
-                return root_bv->rank0(position) - left_bv->rank1(root_bv->rank0(position) - 1);
+                return left_bv->rank0(root_rank - 1);
             } else {
-                return root_bv->rank0(position) - left_bv->rank0(root_bv->rank0(position) - 1);
+                return left_bv->rank1(root_rank - 1);
             }
         } else {
+            size_t root_rank = root_bv->rank1(position);
+            if (root_rank == 0) return 0;
             if (symbol == 2) {
-                return root_bv->rank1(position) - right_bv->rank1(root_bv->rank1(position) - 1);
+                return right_bv->rank0(root_rank - 1);
             } else {
-                return root_bv->rank1(position) - right_bv->rank0(root_bv->rank1(position) - 1);
+                return right_bv->rank1(root_rank - 1);
             }
         }
     }
@@ -117,30 +120,21 @@ public:
     /**
      * Gets the position of the n-th occurrence of the specified symbol in the wavelet tree.
      * 
+     * @param symbol The symbol for which to find the n-th occurrence. Must be in the range [0, 3].
      * @param n The occurrence number of the symbol to find.
-     * @param symbol The symbol for which to find the n-th occurrence.
      * @return The position of the n-th occurrence of the specified symbol in the wavelet tree.
      * @throws std::out_of_range if n is zero or exceeds the number of occurrences of the symbol in the wavelet tree.
      */
-    size_t select(size_t n, uint8_t symbol) const {
+    size_t select(uint8_t symbol, size_t n) const {
         if (n == 0) throw std::out_of_range("n must be greater than zero");
-        bool root_bit = symbol >= 2;
-        if (!root_bit) {
-            if (symbol == 0) {
-                size_t root_pos = root_bv->select0(n + left_bv->rank1(root_bv->size() - 1));
-                return root_pos - left_bv->rank1(root_pos);
-            } else {
-                size_t root_pos = root_bv->select0(n + left_bv->rank0(root_bv->size() - 1));
-                return root_pos - left_bv-> rank0(root_pos);
-            }
+        if(symbol == 0) {
+            return root_bv->select0(left_bv->select0(n) + 1);
+        } else if (symbol == 1) {
+            return root_bv->select0(left_bv->select1(n) + 1);
+        } else if (symbol == 2) {
+            return root_bv->select1(right_bv->select0(n) + 1);
         } else {
-            if (symbol == 2) {
-                size_t root_pos = root_bv->select1(n + right_bv->rank1(root_bv->size() - 1));
-                return root_pos - right_bv->rank1(root_pos);
-            } else {
-                size_t root_pos = root_bv->select1(n + right_bv->rank0(root_bv->size() - 1));
-                return root_pos - right_bv->rank0(root_pos);
-            }
+            return root_bv->select1(right_bv->select1(n) + 1);
         }
     }
 
@@ -153,13 +147,19 @@ public:
      */
     void insert(size_t position, uint8_t symbol) {
         if (position > size()) throw std::out_of_range("position out of range");
-        root_bv->insert(position, symbol >= 2);
+        
+        // Calculate the position in the child bit vector where the new symbol should be inserted
+        size_t child_pos = 0;
+        if (position > 0) {
+            child_pos = (symbol < 2) ? root_bv->rank0(position - 1) : root_bv->rank1(position - 1);
+        }        
+        
+        // Insert the new symbol into root bitvector and the child bitvector
+        root_bv->insert(position, symbol >= 2);        
         if (symbol < 2) {
-            left_bv->insert(position, symbol == 1);
-            right_bv->insert(position, false);
+            left_bv->insert(child_pos, symbol == 1);
         } else {
-            left_bv->insert(position, false);
-            right_bv->insert(position, symbol == 3);
+            right_bv->insert(child_pos, symbol == 3);
         }
     }
 
@@ -171,14 +171,15 @@ public:
      */
     void remove(size_t position) {
         if (position >= size()) throw std::out_of_range("position out of range");
+        
         bool root_bit = root_bv->access(position);
+        size_t child_pos = root_bit ? (root_bv->rank1(position) - 1) : (root_bv->rank0(position) - 1);
         root_bv->remove(position);
+        
         if (!root_bit) {
-            left_bv->remove(position);
-            right_bv->remove(position);
+            left_bv->remove(child_pos);
         } else {
-            left_bv->remove(position);
-            right_bv->remove(position);
+            right_bv->remove(child_pos);
         }
     }
 };

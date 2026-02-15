@@ -62,8 +62,16 @@ TEST_P(BitVectorTest, Rank) {
     for (size_t i = 0; i < 100; i += 2) {
         bv->set(i, true);
     }
-    EXPECT_EQ(bv->rank0(99), 50);
-    EXPECT_EQ(bv->rank1(99), 50);
+    for(size_t i = 0; i < 100; i++) {
+        if (i % 2 == 0) {
+            EXPECT_EQ(bv->rank1(i), i / 2 + 1);
+            EXPECT_EQ(bv->rank0(i), i / 2);
+        } else {
+            EXPECT_EQ(bv->rank1(i), (i + 1) / 2);
+            EXPECT_EQ(bv->rank0(i), (i + 1) / 2);
+        }
+    }
+    EXPECT_THROW(bv->rank0(100), std::out_of_range);
     EXPECT_THROW(bv->rank1(100), std::out_of_range);
 }
 
@@ -98,6 +106,9 @@ TEST_P(BitVectorTest, Insert) {
     EXPECT_EQ(bv->size(), 11);
     EXPECT_TRUE(bv->access(5));
     EXPECT_FALSE(bv->access(6));
+    bv->insert(11, true);
+    EXPECT_EQ(bv->size(), 12);
+    EXPECT_THROW(bv->insert(13, true), std::out_of_range);
 
     bv = create_bitvector(100);
     bv->insert(0, true);
