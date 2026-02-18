@@ -79,3 +79,9 @@ template <> NameSequence* create_name_sequence<ConcatenatedNameSequenceStrategy>
 
 class ArrayNameSequenceStrategy;
 template <> NameSequence* create_name_sequence<ArrayNameSequenceStrategy>();
+
+class MapNameSequenceStrategy;
+template <> NameSequence* create_name_sequence<MapNameSequenceStrategy>();
+
+class ImmerNameSequenceStrategy;
+template <> NameSequence* create_name_sequence<ImmerNameSequenceStrategy>();

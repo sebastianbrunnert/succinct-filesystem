@@ -4,3 +4,6 @@
 [submodule "external/adaptive_dynamic_bitvector"]
 	path = external/adaptive_dynamic_bitvector
 	url = https://github.com/sebastianbrunnert/AdaptiveDynamicBitvectors
+[submodule "external/immer"]
+	path = external/immer
+	url = https://github.com/arximboldi/immer.git

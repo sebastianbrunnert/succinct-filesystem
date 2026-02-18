@@ -44,6 +44,9 @@ TEST_P(NameSequenceTest, Remove) {
     }
     for (size_t i = 0; i < 10; i++) {
         name_sequence->remove(0);
+        for (size_t j = 0; j < 9 - i; j++) {
+            EXPECT_EQ(name_sequence->access(j), "name" + std::to_string(j + i + 1));
+        }
     }
     EXPECT_EQ(name_sequence->size(), 0);
     delete name_sequence;
@@ -54,6 +57,8 @@ INSTANTIATE_TEST_SUITE_P(
     NameSequenceTest,
     ::testing::Values(
         std::function<NameSequence*()>([]() { return create_name_sequence<ArrayNameSequenceStrategy>(); }),
-        std::function<NameSequence*()>([]() { return create_name_sequence<ConcatenatedNameSequenceStrategy>(); })
+        std::function<NameSequence*()>([]() { return create_name_sequence<ConcatenatedNameSequenceStrategy>(); }),
+        std::function<NameSequence*()>([]() { return create_name_sequence<ImmerNameSequenceStrategy>(); }),
+        std::function<NameSequence*()>([]() { return create_name_sequence<MapNameSequenceStrategy>(); })
     )
 );

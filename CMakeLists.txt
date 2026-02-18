@@ -17,6 +17,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Source code
 add_subdirectory(src)
 
+# External libraries
+include_directories(${CMAKE_SOURCE_DIR}/external/immer)
+
 # SIMD support
 add_compile_options(-mbmi2)
 

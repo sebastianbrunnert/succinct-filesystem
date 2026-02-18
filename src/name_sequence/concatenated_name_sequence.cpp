@@ -8,6 +8,9 @@
 #include "name_sequence.hpp"
 #include "../bitvector/bitvector.hpp"
 
+/**
+ * Implementation of the NameSequence interface that stores all names in a single concatenated string and uses a bit vector to mark the boundaries between names.
+ */
 class ConcatenatedNameSequenceStrategy : public NameSequence {
 private:
     std::string concatenated_names;
