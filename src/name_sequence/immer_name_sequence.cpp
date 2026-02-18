@@ -10,6 +10,9 @@
 #include "name_sequence.hpp"
 #include <immer/flex_vector.hpp>
 
+/**
+ * A name sequence implementation using an flex_vector from the immer library.
+ */
 class ImmerNameSequenceStrategy : public NameSequence {
 private:
     immer::flex_vector<std::string> names;

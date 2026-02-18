@@ -8,6 +8,10 @@
 #include "name_sequence.hpp"
 #include <map>
 
+/**
+ * A name sequence implementation using a map to store names at specific positions.
+ * This allows O(log n) access and insertion.
+ */
 class MapNameSequenceStrategy : public NameSequence {
 private:
     std::map<size_t, std::string> names;
