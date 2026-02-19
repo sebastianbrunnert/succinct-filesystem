@@ -29,6 +29,7 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
         ${CMAKE_SOURCE_DIR}/src/name_sequence/concatenated_name_sequence.cpp
         ${CMAKE_SOURCE_DIR}/src/name_sequence/immer_name_sequence.cpp
         ${CMAKE_SOURCE_DIR}/src/name_sequence/map_name_sequence.cpp
+        ${CMAKE_SOURCE_DIR}/src/flouds/flouds.cpp
     )
     
     target_link_libraries(${TEST_NAME} GTest::gtest_main)

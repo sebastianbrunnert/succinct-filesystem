@@ -1,3 +1,10 @@
+/**
+ * This file is part of the Succinct Filesystem project.
+ * 
+ * Copyright (c) 2026 Sebastian Brunnert <mail@sebastianbrunnert.de>
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
 #include <gtest/gtest.h>
 #include "../src/name_sequence/name_sequence.hpp"
 #include <memory>
