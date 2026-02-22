@@ -28,7 +28,9 @@ Flouds::~Flouds() {
 }
 
 size_t Flouds::parent(size_t node_id) {
-
+    size_t parent_folder_index = structure->rank1(node_id);
+    size_t parent = types->select(1, parent_folder_index - 1);
+    return parent;
 }
 
 size_t Flouds::children_count(size_t node_id) {
@@ -36,13 +38,20 @@ size_t Flouds::children_count(size_t node_id) {
         return 0;
     }
 
-    size_t folder_index = types->rank(1, node_id) + 1;
+    // Calculate the folder index of the node (1-based)
+    // Count both type-1 (folders) and type-2 (empty folders)
+    size_t folder_index = types->rank(1, node_id) + types->rank(2, node_id) + 1;
+
+    // Calculate the start position of the childrens
     size_t start = structure->select1(folder_index);
 
-    size_t total_folders = structure->rank1(structure->size() - 1);
+    std::cout << "Node " << node_id << " has folder index " << folder_index << " and children start at position " << start << std::endl;
 
-    if (folder_index+1 < total_folders) {
+    // Check if the endposition of the children is in the next folder or at the end of the structure
+    size_t total_folders = structure->rank1(structure->size() - 1);
+    if (folder_index+1 <= total_folders) {
         size_t next_folder_pos = structure->select1(folder_index + 1);
+        std::cout << "Next folder position: " << next_folder_pos << std::endl;
         return next_folder_pos - start;
     } else {
         return structure->size() - start;
@@ -50,13 +59,11 @@ size_t Flouds::children_count(size_t node_id) {
 }
 
 size_t Flouds::child(size_t node_id, size_t child_index) {
-    size_t folder_index = types->rank(1, node_id) + 1;
-    try {
-        return structure->select1(folder_index) + child_index;
-    } catch (std::out_of_range& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return structure->size();
-    }
+    // Calculate the folder index of the node (1-based)
+    // Count both type-1 (folders) and type-2 (empty folders)
+    size_t folder_index = types->rank(1, node_id) + types->rank(2, node_id) + 1;
+    // Calculate the start position of the childrens + child_index
+    return structure->select1(folder_index) + child_index;
 }
 
 std::string Flouds::get_name(size_t node_id) {
@@ -88,7 +95,17 @@ size_t Flouds::insert(size_t parent_id, const std::string& name, bool is_folder)
         children_count = this->children_count(parent_id);
     }
 
-    size_t insert_pos = child(parent_id, children_count);
+    // Calculate the insertion position (analogusly to child)
+    // Count both type-1 (folders) and type-2 (empty folders)
+    size_t parent_folder_index = types->rank(1, parent_id) + types->rank(2, parent_id) + 1;
+    size_t insert_pos = 0;
+    try {
+        insert_pos = structure->select1(parent_folder_index) + children_count;
+    } catch (std::out_of_range& e) {
+        insert_pos = structure->size() + children_count;
+    }
+
+    // Insert into the structure, names and types
     structure->insert(insert_pos, was_empty);
     names->insert(insert_pos, name);
     types->insert(insert_pos, is_folder ? 2 : 0);
@@ -97,5 +114,65 @@ size_t Flouds::insert(size_t parent_id, const std::string& name, bool is_folder)
 }
 
 void Flouds::remove(size_t node_id) {
-    
-}   
+    std::cout << "Removing node " << node_id << " with name " << get_name(node_id) << std::endl;
+    size_t parent_index = parent(node_id);
+    std::cout << "Parent index: " << parent_index << std::endl;
+    size_t parent_children_before = children_count(parent_index);
+    std::cout << "Parent children before: " << parent_children_before << std::endl;
+
+    bool was_first_child = structure->access(node_id);
+
+    structure->remove(node_id);
+    names->remove(node_id);
+    types->remove(node_id);
+
+    if(parent_children_before == 1) {
+        // If the removed node was the only child, we need to update the type of the parent to empty folder
+        types->set(parent_index, 2);
+    } else if (was_first_child) {
+        // If the removed node was the first child, we need to update the structure bit of the new first child
+        structure->set(node_id, true);
+    }
+}
+
+size_t Flouds::path(std::string path) {
+    if(path == "/") return 0;
+
+    size_t current = 0;
+    size_t start = 1;  // Skip leading '/'
+
+    while (start < path.length()) {
+        // Find next '/' or end of string
+        size_t end = path.find('/', start);
+        if (end == std::string::npos) {
+            end = path.length();
+        }
+        
+        std::string_view component(path.data() + start, end - start);
+        
+        int children_count = this->children_count(current);
+        if (children_count == 0) {
+            throw std::out_of_range("path does not exist");
+        }
+        int first_child = this->child(current, 0);
+        int last_child = this->child(current, children_count - 1);
+
+        bool found = false;
+        for (size_t i = first_child; i <= last_child; i++) {
+            std::string child_name = names->access(i);
+            if (child_name == component) {
+                current = i;
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found) {
+            throw std::out_of_range("path does not exist");
+        }
+
+        start = end + 1;
+    }
+
+    return current;
+}

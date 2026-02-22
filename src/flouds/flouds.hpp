@@ -118,6 +118,15 @@ public:
     virtual void remove(size_t node_id);
     
     /**
+    * Gets the index of the node at the specified path.
+    * 
+    * @param path The path of the node to get. Must be a valid path starting with "/" and using "/" as a separator.
+    * @return The index of the node at the specified path.
+    * @throws std::out_of_range if the path does not exist.
+    */
+    virtual size_t path(std::string path);
+
+    /**
      * Helper function for debugging to see the structure, names and types.
      */
     friend std::ostream& operator<<(std::ostream& os, const Flouds& flouds) {
