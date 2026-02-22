@@ -39,19 +39,15 @@ size_t Flouds::children_count(size_t node_id) {
     }
 
     // Calculate the folder index of the node (1-based)
-    // Count both type-1 (folders) and type-2 (empty folders)
-    size_t folder_index = types->rank(1, node_id) + types->rank(2, node_id) + 1;
+    size_t folder_index = types->rank(1, node_id) + 1;
 
     // Calculate the start position of the childrens
     size_t start = structure->select1(folder_index);
-
-    std::cout << "Node " << node_id << " has folder index " << folder_index << " and children start at position " << start << std::endl;
 
     // Check if the endposition of the children is in the next folder or at the end of the structure
     size_t total_folders = structure->rank1(structure->size() - 1);
     if (folder_index+1 <= total_folders) {
         size_t next_folder_pos = structure->select1(folder_index + 1);
-        std::cout << "Next folder position: " << next_folder_pos << std::endl;
         return next_folder_pos - start;
     } else {
         return structure->size() - start;
@@ -60,8 +56,7 @@ size_t Flouds::children_count(size_t node_id) {
 
 size_t Flouds::child(size_t node_id, size_t child_index) {
     // Calculate the folder index of the node (1-based)
-    // Count both type-1 (folders) and type-2 (empty folders)
-    size_t folder_index = types->rank(1, node_id) + types->rank(2, node_id) + 1;
+    size_t folder_index = types->rank(1, node_id) + 1;
     // Calculate the start position of the childrens + child_index
     return structure->select1(folder_index) + child_index;
 }
@@ -96,8 +91,7 @@ size_t Flouds::insert(size_t parent_id, const std::string& name, bool is_folder)
     }
 
     // Calculate the insertion position (analogusly to child)
-    // Count both type-1 (folders) and type-2 (empty folders)
-    size_t parent_folder_index = types->rank(1, parent_id) + types->rank(2, parent_id) + 1;
+    size_t parent_folder_index = types->rank(1, parent_id) + 1;
     size_t insert_pos = 0;
     try {
         insert_pos = structure->select1(parent_folder_index) + children_count;
@@ -114,11 +108,8 @@ size_t Flouds::insert(size_t parent_id, const std::string& name, bool is_folder)
 }
 
 void Flouds::remove(size_t node_id) {
-    std::cout << "Removing node " << node_id << " with name " << get_name(node_id) << std::endl;
     size_t parent_index = parent(node_id);
-    std::cout << "Parent index: " << parent_index << std::endl;
     size_t parent_children_before = children_count(parent_index);
-    std::cout << "Parent children before: " << parent_children_before << std::endl;
 
     bool was_first_child = structure->access(node_id);
 
