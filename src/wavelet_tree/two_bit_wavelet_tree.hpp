@@ -10,6 +10,7 @@
 #include "../bitvector/bitvector.hpp"
 #include <vector>
 #include <cstdint>
+#include <iostream>
 
 /**
  * This class implements a wavelet tree for an alphabet of size 4 using three bit vectors.
@@ -54,12 +55,9 @@ public:
      */
     void set(size_t position, uint8_t symbol) {
         if (position >= size()) throw std::out_of_range("position out of range");
-        root_bv->set(position, symbol >= 2);
-        if (symbol < 2) {
-            left_bv->set(position, symbol == 1);
-        } else {
-            right_bv->set(position, symbol == 3);
-        }
+        // TODO: optimize
+        remove(position);
+        insert(position, symbol);
     }
 
     /**
@@ -181,6 +179,16 @@ public:
         } else {
             right_bv->remove(child_pos);
         }
+    }
+
+    /**
+     * Helper function to see the symbols for debugging.
+     */
+    friend std::ostream& operator<<(std::ostream& os, const TwoBitWaveletTree& wt) {
+        for (size_t i = 0; i < wt.size(); i++) {
+            os << (int)wt.access(i) << " ";
+        }
+        return os;
     }
 };
 

@@ -38,8 +38,6 @@ public:
     size_t rank1(size_t position) const override {
         if (position >= num_bits) throw std::out_of_range("position out of range");
 
-        printf("Calculating rank1 for position %zu\n", position);
-
         size_t count = 0;
         size_t full_words = (position + 1) / 64;
         size_t remaining_bits = (position + 1) % 64;

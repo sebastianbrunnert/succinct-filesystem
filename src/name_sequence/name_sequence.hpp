@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <string>
+#include <iostream>
 
 /**
  * This class represents a dynamic sequence of strings.
@@ -63,6 +64,17 @@ public:
      * @throws std::out_of_range if the position exceeds the size of the name sequence.
      */    
     virtual void remove(size_t position) = 0;
+
+    /**
+     * Helper function to see the names for debugging.
+     */
+    friend std::ostream& operator<<(std::ostream& os, const NameSequence& ns) {
+        for (size_t i = 0; i < ns.size(); i++) {
+            std::string name = ns.access(i);
+            os << name << " ";
+        }
+        return os;
+    }
 };
 
 /**

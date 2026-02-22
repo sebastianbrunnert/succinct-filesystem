@@ -42,11 +42,16 @@ namespace {
 
     TEST_F(WaveletTreeTest, SetAndAccess) {
         for(size_t i = 0; i < tree->size(); i++) {
-            EXPECT_EQ(tree->access(i), data[i]);
+            tree->set(i, (data[i]+1) % 4);
+        }
+        EXPECT_THROW(tree->set(tree->size(), 1), std::out_of_range);
+
+        for(size_t i = 0; i < tree->size(); i++) {
+            EXPECT_EQ(tree->access(i), (data[i]+1) % 4);
         }
         EXPECT_THROW(tree->access(tree->size()), std::out_of_range);
     }
-
+    
     TEST_F(WaveletTreeTest, Rank) {
         for(size_t i = 0; i < tree->size(); i++) {
             uint8_t symbol = data[i];
