@@ -8,7 +8,7 @@
 all: test
 
 configure:
-	cmake -B build
+	cmake -B build -DBLOCK_DEVICE=simulated
 
 build: configure
 	cmake --build build
