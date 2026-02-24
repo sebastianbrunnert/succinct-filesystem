@@ -11,12 +11,13 @@
 #include <vector>
 #include <cstdint>
 #include <iostream>
+#include "../serialization/serializable.hpp"
 
 /**
  * This class implements a wavelet tree for an alphabet of size 4 using three bit vectors.
  */
 template <typename BitVectorStrategy>
-class TwoBitWaveletTree {
+class TwoBitWaveletTree : public Serializable {
 private:
     // Root bit vector splits symbols 0-1 and 2-3
     BitVector* root_bv;
@@ -189,6 +190,22 @@ public:
             os << (int)wt.access(i) << " ";
         }
         return os;
+    }
+
+    void deserialize(const char* buffer, size_t* offset) override {
+        root_bv->deserialize(buffer, offset);
+        left_bv->deserialize(buffer, offset);
+        right_bv->deserialize(buffer, offset);
+    }
+
+    void serialize(char* buffer, size_t* offset) override {
+        root_bv->serialize(buffer, offset);
+        left_bv->serialize(buffer, offset);
+        right_bv->serialize(buffer, offset);
+    }
+
+    size_t get_serialized_size() override {
+        return root_bv->get_serialized_size() + left_bv->get_serialized_size() + right_bv->get_serialized_size();
     }
 };
 

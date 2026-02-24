@@ -8,9 +8,10 @@
 #include "block_device.hpp"
 #include <fcntl.h>
 #include <unistd.h>
+#include <iostream>
 
 BlockDevice::BlockDevice(const std::string filename, size_t block_size) : block_size(block_size) {
-    file = open(filename.c_str(), O_RDWR | O_CREAT, 0666);
+    file = open(filename.c_str(), O_RDWR | O_CREAT, 0644);
 
     if (file == -1) {
         throw std::runtime_error("Could not open or create file");
@@ -31,6 +32,7 @@ void BlockDevice::write_block(size_t block_index, const char* buffer) {
     write(file, buffer, block_size);
 }
 
+/*
 void BlockDevice::read_data(size_t block_index, size_t offset, size_t size, char* buffer) {
 #ifdef BLOCK_DEVICE_SIMULATED
     lseek(file, block_index * block_size + offset, SEEK_SET);
@@ -80,3 +82,4 @@ void BlockDevice::write_data(size_t block_index, size_t offset, size_t size, con
     }
 #endif
 }
+*/

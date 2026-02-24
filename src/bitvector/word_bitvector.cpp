@@ -170,6 +170,34 @@ public:
             words.pop_back();
         }
     }
+
+    void serialize(char* buffer, size_t* offset) override {
+        size_t size = this->size();
+        memcpy(buffer + *offset, &size, sizeof(size_t));
+        *offset += sizeof(size_t);
+        size_t num_words = (size + 63) / 64;  // Match deserialize logic
+        for (size_t i = 0; i < num_words; i++) {
+            memcpy(buffer + *offset, &words[i], sizeof(size_t));
+            *offset += sizeof(size_t);
+        }
+    }
+
+    void deserialize(const char* buffer, size_t* offset) override {
+        size_t size;
+        memcpy(&size, buffer + *offset, sizeof(size_t));
+        *offset += sizeof(size_t);
+        num_bits = size;
+        words.resize((size + 63) / 64);
+        for (size_t i = 0; i < words.size(); i++) {
+            memcpy(&words[i], buffer + *offset, sizeof(size_t));
+            *offset += sizeof(size_t);
+        }
+    }
+
+    size_t get_serialized_size() override {
+        size_t num_words = (num_bits + 63) / 64;  // Match serialize/deserialize logic
+        return sizeof(size_t) + num_words * sizeof(size_t);
+    }
 };
 
 template <>

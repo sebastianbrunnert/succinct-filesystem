@@ -10,13 +10,14 @@
 #include <cstddef>
 #include <string>
 #include <iostream>
+#include "../serialization/serializable.hpp"
 
 /**
  * This class represents a dynamic sequence of strings.
  * It holds the names of the files and directories in the filesystem.
  * As different strategies that need different usage patterns for the name sequence exist, the interface is extended.
  */
-class NameSequence {
+class NameSequence : public Serializable {
 public:
     /**
      * Virtual destructor.
@@ -75,6 +76,10 @@ public:
         }
         return os;
     }
+
+    virtual void serialize(char* buffer, size_t* offset) override = 0;
+    virtual void deserialize(const char* buffer, size_t* offset) override = 0;
+    virtual size_t get_serialized_size() override = 0;
 };
 
 /**

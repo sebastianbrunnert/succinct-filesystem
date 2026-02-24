@@ -123,4 +123,24 @@ namespace {
 
         EXPECT_THROW(tree->remove(tree->size()), std::out_of_range);
     }
+
+    TEST_F(WaveletTreeTest, SerializeDeserialize) {
+        size_t serialized_size = tree->get_serialized_size();
+        char* buffer = new char[serialized_size];
+        size_t offset = 0;
+        tree->serialize(buffer, &offset);
+        EXPECT_EQ(offset, serialized_size);
+
+        TwoBitWaveletTree<WordBitVectorStrategy>* deserialized_tree = create_two_bit_wavelet_tree<WordBitVectorStrategy>(nullptr, 0);
+        offset = 0;
+        deserialized_tree->deserialize(buffer, &offset);
+        EXPECT_EQ(offset, serialized_size);
+
+        for(size_t i = 0; i < tree->size(); i++) {
+            EXPECT_EQ(tree->access(i), deserialized_tree->access(i));
+        }
+
+        delete[] buffer;
+        delete deserialized_tree;
+    }
 }

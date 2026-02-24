@@ -248,3 +248,39 @@ TEST(FloudsTest, ComplexCase) {
     
     delete flouds;
 }
+
+TEST(FloudsTest, SerializeDeserialize) {
+    Flouds* flouds = create_flouds();
+    size_t folder1 = flouds->insert(0, "folder1", true);
+    size_t file1 = flouds->insert(folder1, "file1", false);
+    size_t file2 = flouds->insert(folder1, "file2", false);
+
+    size_t serialized_size = flouds->get_serialized_size();
+    char* buffer = new char[serialized_size];
+    size_t offset = 0;
+    flouds->serialize(buffer, &offset);
+
+    Flouds* deserialized = create_flouds();
+    offset = 0;
+    deserialized->deserialize(buffer, &offset);
+
+    EXPECT_EQ(deserialized->children_count(0), 1);
+    EXPECT_EQ(deserialized->child(0, 0), 1);
+    EXPECT_EQ(deserialized->get_name(1), "folder1");
+    EXPECT_TRUE(deserialized->is_folder(1));
+    EXPECT_FALSE(deserialized->is_empty_folder(1));
+    
+    EXPECT_EQ(deserialized->children_count(1), 2);
+    EXPECT_EQ(deserialized->child(1, 0), 2);
+    EXPECT_EQ(deserialized->child(1, 1), 3);
+    
+    EXPECT_EQ(deserialized->get_name(2), "file1");
+    EXPECT_FALSE(deserialized->is_folder(2));
+    
+    EXPECT_EQ(deserialized->get_name(3), "file2");
+    EXPECT_FALSE(deserialized->is_folder(3));
+
+    delete flouds;
+    delete deserialized;
+    delete[] buffer;
+}

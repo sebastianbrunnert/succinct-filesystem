@@ -83,6 +83,18 @@ public:
         if (position >= saskeli.size()) throw std::out_of_range("position out of range");
         saskeli.remove(position);
     }
+
+    void serialize(char* buffer, size_t* offset) override {
+
+    }
+
+    void deserialize(const char* buffer, size_t* offset) override {
+
+    }
+
+    size_t get_serialized_size() override {
+        return 0;
+    }
 };
 #endif
 

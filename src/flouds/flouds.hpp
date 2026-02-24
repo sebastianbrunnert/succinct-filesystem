@@ -12,6 +12,7 @@
 #include "../bitvector/bitvector.hpp"
 #include "../wavelet_tree/two_bit_wavelet_tree.hpp"
 #include "../name_sequence/name_sequence.hpp"
+#include "../serialization/serializable.hpp"
 
 /**
  * This class represents the FLOUDS data structure.
@@ -23,7 +24,7 @@
  * title = {FLOUDS: A Succinct File System Structure},
  * doi = {10.15439/2017F535}}
  */
-class Flouds {
+class Flouds : public Serializable {
 private:
     BitVector* structure;
     // 2-bit wavelet tree to store the type of each node (0 = file, 1 = folder, 2 = empty folder, 3 = will be used for future extensions)
@@ -108,7 +109,7 @@ public:
      * @param is_folder true if the new node is a folder, false if it is a file.
      * @return The index of the newly inserted node.
      */
-    size_t insert(size_t parent_id, const std::string& name, bool is_folder);
+    virtual size_t insert(size_t parent_id, const std::string& name, bool is_folder);
 
     /**
      * Removes the node with the specified index from the FLOUDS structure, along with all of its children if it is a folder.
@@ -135,6 +136,10 @@ public:
         os << "Types: " << *flouds.types << std::endl;
         return os;
     }
+
+    virtual void serialize(char* buffer, size_t* offset) override;
+    virtual void deserialize(const char* buffer, size_t* offset) override;
+    virtual size_t get_serialized_size() override;
 
 };
 

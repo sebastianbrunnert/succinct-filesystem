@@ -44,6 +44,43 @@ public:
         if (position >= names.size()) throw std::out_of_range("position out of range");
         names.erase(names.begin() + position);  
     }
+
+    size_t get_serialized_size() override {
+        size_t total_size = sizeof(size_t);
+        for (const std::string& name : names) {
+            total_size += sizeof(size_t);
+            total_size += name.size();
+        }
+        return total_size;
+    }
+
+    void serialize(char* buffer, size_t* offset) override {
+        size_t num_names = names.size();
+        memcpy(buffer + *offset, &num_names, sizeof(size_t));
+        *offset += sizeof(size_t);
+        for (const std::string& name : names) {
+            size_t name_length = name.size();
+            memcpy(buffer + *offset, &name_length, sizeof(size_t));
+            *offset += sizeof(size_t);
+            memcpy(buffer + *offset, name.data(), name_length);
+            *offset += name_length;
+        }
+    }
+
+    void deserialize(const char* buffer, size_t* offset) override {
+        size_t num_names;
+        memcpy(&num_names, buffer + *offset, sizeof(size_t));
+        *offset += sizeof(size_t);
+        names.clear();
+        for (size_t i = 0; i < num_names; i++) {
+            size_t name_length;
+            memcpy(&name_length, buffer + *offset, sizeof(size_t));
+            *offset += sizeof(size_t);
+            std::string name(buffer + *offset, name_length);
+            *offset += name_length;
+            names.push_back(name);
+        }
+    }
 };
 
 template <>

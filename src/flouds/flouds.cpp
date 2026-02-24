@@ -167,3 +167,19 @@ size_t Flouds::path(std::string path) {
 
     return current;
 }
+
+size_t Flouds::get_serialized_size() {
+    return structure->get_serialized_size() + types->get_serialized_size() + names->get_serialized_size();
+}
+
+void Flouds::serialize(char* buffer, size_t* offset) {
+    structure->serialize(buffer, offset);
+    types->serialize(buffer, offset);
+    names->serialize(buffer, offset);
+}
+
+void Flouds::deserialize(const char* buffer, size_t* offset) {
+    structure->deserialize(buffer, offset);
+    types->deserialize(buffer, offset);
+    names->deserialize(buffer, offset);
+}

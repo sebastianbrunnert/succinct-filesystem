@@ -172,6 +172,28 @@ TEST_P(BitVectorTest, Remove) {
     }
 }
 
+TEST_P(BitVectorTest, SerializeDeserialize) {
+    BitVector* bv = create_bitvector(10);
+    bv->set(3, true);
+    bv->set(5, true);
+    size_t serialized_size = bv->get_serialized_size();
+    char* buffer = new char[serialized_size];
+    size_t offset = 0;
+    bv->serialize(buffer, &offset);
+    EXPECT_EQ(offset, serialized_size);
+
+    BitVector* deserialized_bv = create_bitvector(0);
+    offset = 0;
+    deserialized_bv->deserialize(buffer, &offset);
+    EXPECT_EQ(offset, serialized_size);
+    EXPECT_TRUE(deserialized_bv->access(3));
+    EXPECT_TRUE(deserialized_bv->access(5));
+    EXPECT_FALSE(deserialized_bv->access(0));
+    EXPECT_FALSE(deserialized_bv->access(1));
+
+    delete[] buffer;
+}
+
 INSTANTIATE_TEST_SUITE_P(
     BitVectorStrategies,
     BitVectorTest,

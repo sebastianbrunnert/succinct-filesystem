@@ -78,6 +78,28 @@ public:
             boundaries->remove(start);
         }
     }
+
+    size_t get_serialized_size() override {
+        return sizeof(size_t) + concatenated_names.size() + boundaries->get_serialized_size();
+    }
+
+    void serialize(char* buffer, size_t* offset) override {
+        size_t name_length = concatenated_names.size();
+        memcpy(buffer + *offset, &name_length, sizeof(size_t));
+        *offset += sizeof(size_t);
+        memcpy(buffer + *offset, concatenated_names.data(), name_length);
+        *offset += name_length;
+        boundaries->serialize(buffer, offset);
+    }
+
+    void deserialize(const char* buffer, size_t* offset) override {
+        size_t name_length;
+        memcpy(&name_length, buffer + *offset, sizeof(size_t));
+        *offset += sizeof(size_t);
+        concatenated_names = std::string(buffer + *offset, name_length);
+        *offset += name_length;
+        boundaries->deserialize(buffer, offset);
+    }
 };
 
 template <>

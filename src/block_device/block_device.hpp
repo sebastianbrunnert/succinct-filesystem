@@ -24,11 +24,19 @@ public:
      * @throws std::runtime_error if the file cannot be opened or created.
      */
     BlockDevice(const std::string filename, size_t block_size = 4096);
+    
 
     /**
      * Virtual destructor.
      */
     virtual ~BlockDevice();
+
+    /**
+     * @return The block size.
+     */
+    int get_block_size() const {
+        return block_size;
+    }
 
     /**
      * Reads a block into the provided buffer.
@@ -45,25 +53,5 @@ public:
      * @param buffer The buffer containing the data. Must be block_size bytes.
      */
     virtual void write_block(size_t block_index, const char* buffer);
-
-    /**
-     * Reads a sequence of bytes. The sequence may span multiple blocks.
-     * 
-     * @param block_index The index of the first block to read from.
-     * @param offset The offset within the first block to start reading from.
-     * @param size The number of bytes to read.
-     * @param buffer The buffer to write the data into. Must be at least size bytes.
-     */
-    virtual void read_data(size_t block_index, size_t offset, size_t size, char* buffer);
-
-    /**
-     * Writes a sequence of bytes. The sequence may span multiple blocks.
-     * 
-     * @param block_index The index of the first block to write to.
-     * @param offset The offset within the first block to start writing to.
-     * @param size The number of bytes to write.
-     * @param buffer The buffer containing the data. Must be at least size bytes.
-     */
-    virtual void write_data(size_t block_index, size_t offset, size_t size, const char* buffer);
 
 };

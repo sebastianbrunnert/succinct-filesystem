@@ -59,6 +59,29 @@ TEST_P(NameSequenceTest, Remove) {
     delete name_sequence;
 }
 
+TEST_P(NameSequenceTest, SerializeDeserialize) {
+    auto name_sequence = this->create_name_sequence();
+    for (size_t i = 0; i < 10; i++) {
+        name_sequence->insert(i, "name" + std::to_string(i));
+    }
+    size_t serialized_size = name_sequence->get_serialized_size();
+    char* buffer = new char[serialized_size];
+    size_t offset = 0;
+    name_sequence->serialize(buffer, &offset);
+    EXPECT_EQ(offset, serialized_size);
+
+    auto deserialized_name_sequence = this->create_name_sequence();
+    size_t deserialization_offset = 0;
+    deserialized_name_sequence->deserialize(buffer, &deserialization_offset);
+    EXPECT_EQ(deserialization_offset, serialized_size);
+    for (size_t i = 0; i < 10; i++) {
+        EXPECT_EQ(deserialized_name_sequence->access(i), "name" + std::to_string(i));
+    }
+    delete[] buffer;
+    delete name_sequence;
+    delete deserialized_name_sequence;
+}
+
 INSTANTIATE_TEST_SUITE_P(
     NameSequenceStrategies,
     NameSequenceTest,
