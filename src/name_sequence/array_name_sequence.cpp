@@ -8,6 +8,7 @@
 #include <vector>
 #include <stdexcept>
 #include "name_sequence.hpp"
+#include <cstring>
 
 /**
  * Plain array-based implementation of the NameSequence interface.

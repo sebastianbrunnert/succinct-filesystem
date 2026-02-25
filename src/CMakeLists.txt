@@ -29,9 +29,12 @@ add_executable(succinct_filesystem
     fsm/file_system_manager.cpp
 )
 
-# Link FUSE3 library
+# Link FUSE3 and immer library
 target_link_libraries(succinct_filesystem ${FUSE3_LIBRARIES})
-target_include_directories(succinct_filesystem PRIVATE ${FUSE3_INCLUDE_DIRS})
+target_include_directories(succinct_filesystem PRIVATE 
+    ${FUSE3_INCLUDE_DIRS}
+    ${CMAKE_SOURCE_DIR}/external/immer
+)
 target_compile_options(succinct_filesystem PRIVATE ${FUSE3_CFLAGS_OTHER})
 
 # Place the executable directly in build/ instead of build/src/
