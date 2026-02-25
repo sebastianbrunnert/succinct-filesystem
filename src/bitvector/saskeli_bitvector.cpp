@@ -8,7 +8,8 @@
 #include "bitvector.hpp"
 #include <stdexcept>
 
-#if defined(__i386__) || defined(__x86_64__)
+// Check if _pdep_u64 is available (requires BMI2 support)
+#if defined(__BMI2__)
 #include "../../external/saskeli_bit_vector/bit_vector/bv.hpp"
 
 /**

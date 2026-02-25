@@ -8,6 +8,7 @@
 #include <vector>
 #include <stdexcept>
 #include "bitvector.hpp"
+#include <cstring>
 
 /**
  * Improved implementation of the BitVector interface.

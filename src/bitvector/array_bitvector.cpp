@@ -8,6 +8,7 @@
 #include <vector>
 #include <stdexcept>
 #include "bitvector.hpp"
+#include <cstring>
 
 /**
  * Plain array-based implementation of the BitVector interface.
