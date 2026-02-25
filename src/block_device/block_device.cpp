@@ -16,8 +16,8 @@ BlockDevice::BlockDevice(const std::string filename, size_t block_size) : block_
     if (file == -1) {
         throw std::runtime_error("Could not open or create file");
     }
-        
-    // Ensure file is at least one block long to prevent truncate errors
+    printf("Opened block device file: %s\n", filename.c_str());
+    
     if (lseek(file, 0, SEEK_END) < (off_t)block_size) {
         ftruncate(file, block_size);
     }

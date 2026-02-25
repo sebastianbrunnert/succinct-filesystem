@@ -21,6 +21,8 @@ FileSystemManager::~FileSystemManager() {
 }
 
 void FileSystemManager::mount(std::string path) {
+    printf("Mounting filesystem from: %s\n", path.c_str());
+
     this->block_device = new BlockDevice(path);
     this->allocation_manager = create_allocation_manager<BestFitAllocationStrategy>(block_device);
     this->flouds = create_flouds();
