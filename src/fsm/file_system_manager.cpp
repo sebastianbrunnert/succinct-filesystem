@@ -6,6 +6,7 @@
  */
 
 #include "file_system_manager.hpp"
+#include <cstring>
 
 FileSystemManager::~FileSystemManager() {
     delete flouds;

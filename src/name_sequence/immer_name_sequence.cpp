@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include "name_sequence.hpp"
 #include <immer/flex_vector.hpp>
+#include <cstring>
 
 /**
  * A name sequence implementation using an flex_vector from the immer library.

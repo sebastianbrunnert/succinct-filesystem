@@ -27,6 +27,12 @@ add_executable(succinct_filesystem
     block_device/block_device.cpp
     fsm/allocation/best_fit_allocation.cpp
     fsm/file_system_manager.cpp
+    ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/hybridBV.c
+    ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/hybridId.c
+    ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/basics.c
+    ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/leafBV.c
+    ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/leafId.c
+    ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/staticBV.c
 )
 
 # Link FUSE3 and immer library

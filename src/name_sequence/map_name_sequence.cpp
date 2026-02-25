@@ -7,6 +7,7 @@
 
 #include "name_sequence.hpp"
 #include <map>
+#include <cstring>
 
 /**
  * A name sequence implementation using a map to store names at specific positions.
