@@ -49,6 +49,7 @@ static void flouds_destroy(void *userdata) {
  * @param name The name of the entry being looked up within the parent directory.
  */
 static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
+    fuse_reply_err(req, ENOSYS);
 }
 
 /**
@@ -59,6 +60,7 @@ static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
  * @param fi Internal file information.
  */
 static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+    fuse_reply_err(req, ENOSYS);
 }
 
 /**
@@ -69,6 +71,7 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+    fuse_reply_err(req, ENOSYS);
 }
 
 /**
@@ -81,6 +84,7 @@ static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
+    fuse_reply_err(req, ENOSYS);
 }
 
 /**
@@ -93,6 +97,7 @@ static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
  * @param fi Internal file information.
  */
 static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
+    fuse_reply_err(req, ENOSYS);
 }
 
 // This structure defines the operation that our FUSE filesystem supports.
