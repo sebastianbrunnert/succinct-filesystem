@@ -8,7 +8,6 @@
 #include "bitvector.hpp"
 #include <stdexcept>
 
-// Check if _pdep_u64 is available (requires BMI2 support)
 #if defined(__BMI2__)
 #include "../../external/saskeli_bit_vector/bit_vector/bv.hpp"
 
@@ -101,7 +100,7 @@ public:
 
 template <>
 BitVector* create_bitvector<SaskeliBitVectorStrategy>(std::size_t n) {
-    #if defined(__i386__) || defined(__x86_64__)
+    #if defined(__BMI2__)
         return new SaskeliBitVectorStrategy(n);
     #else
         std::cerr << "SaskeliBitVectorStrategy is only supported on x86 architectures. Falling back to ArrayBitVectorStrategy." << std::endl;
