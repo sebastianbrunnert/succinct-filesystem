@@ -9,33 +9,16 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <iostream>
-#include <cstring>
-#include <cerrno>
 
 BlockDevice::BlockDevice(const std::string filename, size_t block_size) : block_size(block_size) {
-    char cwd[1024];
-    getcwd(cwd, sizeof(cwd));
-    std::cout << "DEBUG BlockDevice: Current working directory: " << cwd << std::endl;
-    std::cout << "DEBUG BlockDevice: Opening file: " << filename << std::endl;
-    
     file = open(filename.c_str(), O_RDWR | O_CREAT, 0644);
 
     if (file == -1) {
-        std::cerr << "ERROR BlockDevice: Could not open file '" << filename << "': " 
-                  << strerror(errno) << std::endl;
         throw std::runtime_error("Could not open or create file");
     }
     
-    std::cout << "DEBUG BlockDevice: File opened successfully with fd=" << file << std::endl;
-    
-    off_t file_size = lseek(file, 0, SEEK_END);
-    std::cout << "DEBUG BlockDevice: File size: " << file_size << " bytes, block_size: " << block_size << std::endl;
-    
-    if (file_size < (off_t)block_size) {
-        std::cout << "DEBUG BlockDevice: Truncating file to " << block_size << " bytes" << std::endl;
-        if (ftruncate(file, block_size) == -1) {
-            std::cerr << "ERROR BlockDevice: ftruncate failed: " << strerror(errno) << std::endl;
-        }
+    if (lseek(file, 0, SEEK_END) < (off_t)block_size) {
+        ftruncate(file, block_size);
     }
 }
 
