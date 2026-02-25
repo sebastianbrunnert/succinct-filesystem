@@ -88,6 +88,7 @@ static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
  * @param fi Internal file information.
  */
 static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
+    fuse_reply_buf(req, "", 0);
 }
 
 // This structure defines the operation that our FUSE filesystem supports.
