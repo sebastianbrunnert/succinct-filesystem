@@ -11,6 +11,7 @@
 #include <fuse3/fuse_lowlevel.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <string.h>
 #include "fsm/file_system_manager.hpp"
 
 FileSystemManager* fsm = nullptr;
@@ -98,21 +99,29 @@ static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t of
 }
 
 // This structure defines the operation that our FUSE filesystem supports.
-static const struct fuse_lowlevel_ops flouds_operations = {
-    .init = flouds_init,
-    .destroy = flouds_destroy,
-    .lookup = flouds_lookup,
-    .getattr = flouds_getattr,
-    .open = flouds_open,
-    .read = flouds_read,
-    .readdir = flouds_readdir
-};
+static struct fuse_lowlevel_ops flouds_operations;
 
 /**
  * This is the main entry point of the FUSE filesystem. The main loop is started here.
  * The initialization is analogous to this default FUSE example: https://libfuse.github.io/doxygen/example_2hello__ll_8c.html
  */
 int main(int argc, char *argv[]) {
+    printf("1");
+    fflush(stdout);
+
+    // Initialize the operations structure
+    memset(&flouds_operations, 0, sizeof(flouds_operations));
+    flouds_operations.init = flouds_init;
+    flouds_operations.destroy = flouds_destroy;
+    flouds_operations.lookup = flouds_lookup;
+    flouds_operations.getattr = flouds_getattr;
+    flouds_operations.open = flouds_open;
+    flouds_operations.read = flouds_read;
+    flouds_operations.readdir = flouds_readdir;
+
+    printf("2\n");
+    fflush(stdout);
+
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
     struct fuse_session *se;
     struct fuse_cmdline_opts opts;
