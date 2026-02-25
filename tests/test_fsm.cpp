@@ -9,16 +9,13 @@
 #include "../src/fsm/file_system_manager.hpp"
 
 TEST(FileSystemManagerTest, Mount) {
-    std::remove("test_fs.img");
-
-
     FileSystemManager* fsm = new FileSystemManager();
     EXPECT_NE(fsm, nullptr);
     fsm->mount("test_fs.img");
     delete fsm;
 
-
     FileSystemManager* fsm2 = new FileSystemManager();
+    EXPECT_NE(fsm, nullptr);
     fsm2->mount("test_fs.img");
     delete fsm2;
 

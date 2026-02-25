@@ -18,26 +18,24 @@ void FileSystemManager::mount(std::string path) {
     this->allocation_manager = create_allocation_manager<BestFitAllocationStrategy>(block_device);
     this->flouds = create_flouds();
 
-    char buffer[sizeof(FloudsHeader)];
+    char* buffer = new char[block_device->get_block_size()];
     block_device->read_block(0, buffer);
-    FloudsHeader* header = (FloudsHeader*) buffer;
-
-    if(std::string(header->magic, 6) != "FLOUDS") {
+    
+    // Check magic string safely
+    if (std::memcmp(buffer, "FLOUDS", 6) != 0) {
         // Initialize new filesystem
-        FloudsHeader new_header;
-        const char* magic_str = "FLOUDS";
-        std::copy(magic_str, magic_str + 6, new_header.magic);
-        new_header.allocation_manager_size = 0;
-        new_header.allocation_manager_handle = 0;
-        new_header.flouds_handle = 0;
-        new_header.flouds_size = 0;
-        this->header = new_header;
+        std::memset(&header, 0, sizeof(FloudsHeader));
+        std::memcpy(header.magic, "FLOUDS", 6);
         
-        block_device->write_block(0, (char*) &new_header);
+        header.allocation_manager_size = 0;
+        header.allocation_manager_handle = 0;
+        header.flouds_handle = 0;
+        header.flouds_size = 0;
+        
         this->save();
     } else {
         // Load existing filesystem
-        this->header = *header;
+        std::memcpy(&header, buffer, sizeof(FloudsHeader));
     }
 }
 
