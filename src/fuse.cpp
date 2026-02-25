@@ -1,208 +1,281 @@
-/**
- * This file is part of the Succinct Filesystem project.
- * 
- * Copyright (c) 2026 Sebastian Brunnert <mail@sebastianbrunnert.de>
- * SPDX-License-Identifier: GPL-2.0-only
- */
-
-// We use FUSE 3.18, which is the latest stable release as of February 2026.
-#define FUSE_USE_VERSION FUSE_MAKE_VERSION(3, 18)
-
-#include <fuse3/fuse_lowlevel.h>
+/*
+  FUSE: Filesystem in Userspace
+  Copyright (C) 2001-2007  Miklos Szeredi <miklos@szeredi.hu>
+ 
+  This program can be distributed under the terms of the GNU GPLv2.
+  See the file GPL2.txt.
+*/
+ 
+#define FUSE_USE_VERSION FUSE_MAKE_VERSION(3, 12)
+ 
+#include <fuse_lowlevel.h>
 #include <stdio.h>
-#include <stddef.h>
-#include "fsm/file_system_manager.hpp"
-
-FileSystemManager* fsm = nullptr;
-
-/**
- * This function is called when the FUSE session is being initialized. It can be used to set up any necessary state or resources for the filesystem.
- * 
- * @param userdata The user data passed to fuse_session_new()
- * @param conn Connection information about the FUSE session
- */
-static void flouds_init(void *userdata, struct fuse_conn_info *conn) {
-    const char* image_path = (const char*) userdata;    
-    printf("Loading filesystem from: %s\n", image_path);
-
-    /*
-    fsm = new FileSystemManager();
-    fsm->mount(image_path);
-    */
-}
-
-/**
- * This function is called when the FUSE session is being destroyed, either due to unmounting or an error.
- * 
- * @param userdata The user data passed to fuse_session_new()
- */
-static void flouds_destroy(void *userdata) {
-    if (fsm != nullptr) {
-        fsm->unmount();
-        delete fsm;
-    }
-}
-
-/**
- * This function is called when a content of a directory is being looked up.
- * 
- * @param req The request handle that contains information about the lookup request and is used to send the response back to the kernel.
- * @param parent The inode number of the parent directory where the lookup is being performed.
- * @param name The name of the entry being looked up within the parent directory.
- */
-static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
-}
-
-/**
- * This function is called when the attributes of a file or directory are being requested.
- * 
- * @param req The request handle that contains information about the getattr request and is used to send the response back to the kernel.
- * @param ino The inode number of the file or directory whose attributes are being requested.
- * @param fi Internal file information.
- */
-static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
-}
-
-/**
- * This function is called when a file is being opened.
- * 
- * @param req The request handle that contains information about the open request and is used to send the response back to the kernel.
- * @param ino The inode number of the file being opened.
- * @param fi Internal file information that can be used to store state about the open file.
- */
-static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
-}
-
-/**
- * This function is called when the contents of a file are being read.
- * 
- * @param req The request handle that contains information about the read request and is used to send the response back to the kernel.
- * @param ino The inode number of the file being read.
- * @param size The size of the buffer provided for reading the file contents.
- * @param off The offset within the file from which to start reading.
- * @param fi Internal file information that can be used to store state about the open file.
- */
-static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
-}
-
-/**
- * This function is called when the contents of a directory are being read.
- * 
- * @param req The request handle that contains information about the readdir request and is used to send the response back to the kernel.
- * @param ino The inode number of the directory whose contents are being read.
- * @param size The size of the buffer provided for reading the directory entries.
- * @param off The offset within the directory entries from which to start reading.
- * @param fi Internal file information.
- */
-static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
-}
-
-// This structure defines the operation that our FUSE filesystem supports.
-static const struct fuse_lowlevel_ops flouds_operations = {
-    .init = flouds_init,
-    .destroy = flouds_destroy,
-    .lookup = flouds_lookup,
-    .getattr = flouds_getattr,
-    .open = flouds_open,
-    .read = flouds_read,
-    .readdir = flouds_readdir
-};
-
-/**
- * This is the main entry point of the FUSE filesystem. The main loop is started here.
- * The initialization is analogous to this default FUSE example: https://libfuse.github.io/doxygen/example_2hello__ll_8c.html
- */
-int main(int argc, char *argv[]) {
-    printf("1");
-
-    struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
-    struct fuse_session *se;
-    struct fuse_cmdline_opts opts;
-    struct fuse_loop_config *config;
-    const char *image_path = NULL;
-    int ret = -1;
-
-    // Extract the image path (first non-option argument) before parsing cmdline
-    for (int i = 1; i < args.argc; i++) {
-        if (args.argv[i][0] != '-') {
-            image_path = args.argv[i];
-            // Remove this argument from args so fuse_parse_cmdline gets the mountpoint
-            for (int j = i; j < args.argc - 1; j++) {
-                args.argv[j] = args.argv[j + 1];
-            }
-            args.argc--;
-            break;
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <assert.h>
+ 
+static const char *hello_str = "Hello World!\n";
+static const char *hello_name = "hello";
+ 
+static int hello_stat(fuse_ino_t ino, struct stat *stbuf)
+{
+        stbuf->st_ino = ino;
+        switch (ino) {
+        case 1:
+                stbuf->st_mode = S_IFDIR | 0755;
+                stbuf->st_nlink = 2;
+                break;
+ 
+        case 2:
+                stbuf->st_mode = S_IFREG | 0444;
+                stbuf->st_nlink = 1;
+                stbuf->st_size = strlen(hello_str);
+                break;
+ 
+        default:
+                return -1;
         }
-    }
-
-    // Parse the command line arguments. This will fill the opts structure with the relevant options for the FUSE session.
-    if (fuse_parse_cmdline(&args, &opts) != 0) {
-        return 1;
-    }
-
-    if (opts.show_help) {
-        // If the user requested help information, print it and exit.
-        printf("usage: %s [options] <image> <mountpoint>\n\n", argv[0]);
-        fuse_cmdline_help();
-        fuse_lowlevel_help();
-        ret = 0;
-        goto cleanup_args;
-    } else if (opts.show_version) {
-        // If the user requested version information, print it and exit.
-        fuse_lowlevel_version();
-        ret = 0;
-        goto cleanup_args;
-    }
-
-    if (image_path == NULL || opts.mountpoint == NULL) {
-        // If image or mount point was not provided, print usage information and exit.
-        printf("usage: %s [options] <image> <mountpoint>\n", argv[0]);
-        printf("       %s --help\n", argv[0]);
-        ret = 1;
-        goto cleanup_args;
-    }
-
-    // Create a new FUSE session with the parsed arguments and the defined operations.
-    // Pass image_path as userdata so it is available in flouds_init
-    se = fuse_session_new(&args, &flouds_operations, sizeof(flouds_operations), (void*) image_path);
-
-    if(se == NULL) {
-        // Session could not be created
-        goto cleanup_args;
-    }
-
-    if (fuse_set_signal_handlers(se) != 0) {
-        // Failed to set signal handlers
-        goto cleanup_session;
-    }
-
-    if (fuse_session_mount(se, opts.mountpoint) != 0) {
-        // Failed to mount the filesystem
-        goto cleanup_signal_handlers;
-    }
-
-    // Daemonize the process if the --foreground option is not set.
-    fuse_daemonize(opts.foreground);
-
-    // Block until ctrl-c or fusermount -u is issued.
-    if (opts.singlethread) {
-        ret = fuse_session_loop(se);
-    } else {
-        config = fuse_loop_cfg_create();
-        fuse_loop_cfg_set_clone_fd(config, opts.clone_fd);
-        fuse_loop_cfg_set_max_threads(config, opts.max_threads);
-        ret = fuse_session_loop_mt(se, config);
-        fuse_loop_cfg_destroy(config);
-        config = NULL;
-    }
-
-    fuse_session_unmount(se);
-cleanup_signal_handlers:
-    fuse_remove_signal_handlers(se);
-cleanup_session:
-    fuse_session_destroy(se);
-cleanup_args:
-    fuse_opt_free_args(&args);
-
-    return ret ? 1 : 0;
+        return 0;
+}
+ 
+static void hello_ll_init(void *userdata, struct fuse_conn_info *conn)
+{
+        (void)userdata;
+ 
+        /* Disable the receiving and processing of FUSE_INTERRUPT requests */
+        conn->no_interrupt = 1;
+ 
+        /* Test setting flags the old way */
+        conn->want = FUSE_CAP_ASYNC_READ;
+        conn->want &= ~FUSE_CAP_ASYNC_READ;
+}
+ 
+static void hello_ll_getattr(fuse_req_t req, fuse_ino_t ino,
+                             struct fuse_file_info *fi)
+{
+        struct stat stbuf;
+ 
+        (void) fi;
+ 
+        memset(&stbuf, 0, sizeof(stbuf));
+        if (hello_stat(ino, &stbuf) == -1)
+                fuse_reply_err(req, ENOENT);
+        else
+                fuse_reply_attr(req, &stbuf, 1.0);
+}
+ 
+static void hello_ll_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
+{
+        struct fuse_entry_param e;
+ 
+        if (parent != 1 || strcmp(name, hello_name) != 0)
+                fuse_reply_err(req, ENOENT);
+        else {
+                memset(&e, 0, sizeof(e));
+                e.ino = 2;
+                e.attr_timeout = 1.0;
+                e.entry_timeout = 1.0;
+                hello_stat(e.ino, &e.attr);
+ 
+                fuse_reply_entry(req, &e);
+        }
+}
+ 
+struct dirbuf {
+        char *p;
+        size_t size;
+};
+ 
+static void dirbuf_add(fuse_req_t req, struct dirbuf *b, const char *name,
+                       fuse_ino_t ino)
+{
+        struct stat stbuf;
+        size_t oldsize = b->size;
+        b->size += fuse_add_direntry(req, NULL, 0, name, NULL, 0);
+        b->p = (char *) realloc(b->p, b->size);
+        memset(&stbuf, 0, sizeof(stbuf));
+        stbuf.st_ino = ino;
+        fuse_add_direntry(req, b->p + oldsize, b->size - oldsize, name, &stbuf,
+                          b->size);
+}
+ 
+#define min(x, y) ((x) < (y) ? (x) : (y))
+ 
+static int reply_buf_limited(fuse_req_t req, const char *buf, size_t bufsize,
+                             off_t off, size_t maxsize)
+{
+        if (off < bufsize)
+                return fuse_reply_buf(req, buf + off,
+                                      min(bufsize - off, maxsize));
+        else
+                return fuse_reply_buf(req, NULL, 0);
+}
+ 
+static void hello_ll_readdir(fuse_req_t req, fuse_ino_t ino, size_t size,
+                             off_t off, struct fuse_file_info *fi)
+{
+        (void) fi;
+ 
+        if (ino != 1)
+                fuse_reply_err(req, ENOTDIR);
+        else {
+                struct dirbuf b;
+ 
+                memset(&b, 0, sizeof(b));
+                dirbuf_add(req, &b, ".", 1);
+                dirbuf_add(req, &b, "..", 1);
+                dirbuf_add(req, &b, hello_name, 2);
+                reply_buf_limited(req, b.p, b.size, off, size);
+                free(b.p);
+        }
+}
+ 
+static void hello_ll_open(fuse_req_t req, fuse_ino_t ino,
+                          struct fuse_file_info *fi)
+{
+        if (ino != 2)
+                fuse_reply_err(req, EISDIR);
+        else if ((fi->flags & O_ACCMODE) != O_RDONLY)
+                fuse_reply_err(req, EACCES);
+        else
+                fuse_reply_open(req, fi);
+}
+ 
+static void hello_ll_read(fuse_req_t req, fuse_ino_t ino, size_t size,
+                          off_t off, struct fuse_file_info *fi)
+{
+        (void) fi;
+ 
+        assert(ino == 2);
+        reply_buf_limited(req, hello_str, strlen(hello_str), off, size);
+}
+ 
+static void hello_ll_getxattr(fuse_req_t req, fuse_ino_t ino, const char *name,
+                                                          size_t size)
+{
+        (void)size;
+        assert(ino == 1 || ino == 2);
+        if (strcmp(name, "hello_ll_getxattr_name") == 0)
+        {
+                const char *buf = "hello_ll_getxattr_value";
+                fuse_reply_buf(req, buf, strlen(buf));
+        }
+        else
+        {
+                fuse_reply_err(req, ENOTSUP);
+        }
+}
+ 
+static void hello_ll_setxattr(fuse_req_t req, fuse_ino_t ino, const char *name,
+                                                          const char *value, size_t size, int flags)
+{
+        (void)flags;
+        (void)size;
+        assert(ino == 1 || ino == 2);
+        const char* exp_val = "hello_ll_setxattr_value";
+        if (strcmp(name, "hello_ll_setxattr_name") == 0 &&
+            strlen(exp_val) == size &&
+            strncmp(value, exp_val, size) == 0)
+        {
+                fuse_reply_err(req, 0);
+        }
+        else
+        {
+                fuse_reply_err(req, ENOTSUP);
+        }
+}
+ 
+static void hello_ll_removexattr(fuse_req_t req, fuse_ino_t ino, const char *name)
+{
+        assert(ino == 1 || ino == 2);
+        if (strcmp(name, "hello_ll_removexattr_name") == 0)
+        {
+                fuse_reply_err(req, 0);
+        }
+        else
+        {
+                fuse_reply_err(req, ENOTSUP);
+        }
+}
+ 
+static const struct fuse_lowlevel_ops hello_ll_oper = {
+        .init = hello_ll_init,
+        .lookup = hello_ll_lookup,
+        .getattr = hello_ll_getattr,
+        .readdir = hello_ll_readdir,
+        .open = hello_ll_open,
+        .read = hello_ll_read,
+        .setxattr = hello_ll_setxattr,
+        .getxattr = hello_ll_getxattr,
+        .removexattr = hello_ll_removexattr,
+};
+ 
+int main(int argc, char *argv[])
+{
+        struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+        struct fuse_session *se;
+        struct fuse_cmdline_opts opts;
+        struct fuse_loop_config *config;
+        int ret = -1;
+ 
+        if (fuse_parse_cmdline(&args, &opts) != 0)
+                return 1;
+        if (opts.show_help) {
+                printf("usage: %s [options] <mountpoint>\n\n", argv[0]);
+                fuse_cmdline_help();
+                fuse_lowlevel_help();
+                ret = 0;
+                goto err_out1;
+        } else if (opts.show_version) {
+                printf("FUSE library version %s\n", fuse_pkgversion());
+                fuse_lowlevel_version();
+                ret = 0;
+                goto err_out1;
+        }
+ 
+        if(opts.mountpoint == NULL) {
+                printf("usage: %s [options] <mountpoint>\n", argv[0]);
+                printf("       %s --help\n", argv[0]);
+                ret = 1;
+                goto err_out1;
+        }
+ 
+        se = fuse_session_new(&args, &hello_ll_oper,
+                              sizeof(hello_ll_oper), NULL);
+        if (se == NULL)
+            goto err_out1;
+ 
+        if (fuse_set_signal_handlers(se) != 0)
+            goto err_out2;
+ 
+        if (fuse_session_mount(se, opts.mountpoint) != 0)
+            goto err_out3;
+ 
+        fuse_daemonize(opts.foreground);
+ 
+        /* Block until ctrl+c or fusermount -u */
+        if (opts.singlethread)
+                ret = fuse_session_loop(se);
+        else {
+                config = fuse_loop_cfg_create();
+                fuse_loop_cfg_set_clone_fd(config, opts.clone_fd);
+                fuse_loop_cfg_set_max_threads(config, opts.max_threads);
+                ret = fuse_session_loop_mt(se, config);
+                fuse_loop_cfg_destroy(config);
+                config = NULL;
+        }
+ 
+        fuse_session_unmount(se);
+err_out3:
+        fuse_remove_signal_handlers(se);
+err_out2:
+        fuse_session_destroy(se);
+err_out1:
+        free(opts.mountpoint);
+        fuse_opt_free_args(&args);
+ 
+        return ret ? 1 : 0;
 }
