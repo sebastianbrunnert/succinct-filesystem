@@ -39,11 +39,6 @@ private:
 public:
 
     /**
-     * Constructor initializes all pointers to nullptr.
-     */
-    FileSystemManager();
-
-    /**
      * Virtual destructor.
      */
     virtual ~FileSystemManager();

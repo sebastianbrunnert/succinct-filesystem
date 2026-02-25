@@ -8,14 +8,10 @@
 #include "file_system_manager.hpp"
 #include <cstring>
 
-FileSystemManager::FileSystemManager() : flouds(nullptr), block_device(nullptr), allocation_manager(nullptr) {
-    std::memset(&header, 0, sizeof(FloudsHeader));
-}
-
 FileSystemManager::~FileSystemManager() {
-    if (flouds) delete flouds;
-    if (allocation_manager) delete allocation_manager;
-    if (block_device) delete block_device;
+    delete flouds;
+    delete allocation_manager;
+    delete block_device;
 }
 
 void FileSystemManager::mount(std::string path) {
@@ -62,7 +58,9 @@ void FileSystemManager::mount(std::string path) {
 
 void FileSystemManager::unmount() {
     this->save();
-    // Don't delete here - destructor will handle cleanup
+    delete flouds;
+    delete allocation_manager;
+    delete block_device;
 }
 
 void FileSystemManager::save() {
