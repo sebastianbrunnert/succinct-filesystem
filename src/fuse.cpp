@@ -11,6 +11,9 @@
 #include <fuse3/fuse_lowlevel.h>
 #include <stdio.h>
 #include <stddef.h>
+#include "fsm/file_system_manager.hpp"
+
+FileSystemManager* fsm = nullptr;
 
 /**
  * This function is called when the FUSE session is being initialized. It can be used to set up any necessary state or resources for the filesystem.
@@ -19,8 +22,11 @@
  * @param conn Connection information about the FUSE session
  */
 static void flouds_init(void *userdata, struct fuse_conn_info *conn) {
-    const char *image_path = (const char*) userdata;    
+    const char* image_path = (const char*) userdata;    
     printf("Loading filesystem from: %s\n", image_path);
+
+    fsm = new FileSystemManager();
+    fsm->mount(image_path);
 }
 
 /**
@@ -29,6 +35,10 @@ static void flouds_init(void *userdata, struct fuse_conn_info *conn) {
  * @param userdata The user data passed to fuse_session_new()
  */
 static void flouds_destroy(void *userdata) {
+    if (fsm != nullptr) {
+        fsm->unmount();
+        delete fsm;
+    }
 }
 
 /**

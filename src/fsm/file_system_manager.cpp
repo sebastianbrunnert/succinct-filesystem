@@ -36,7 +36,30 @@ void FileSystemManager::mount(std::string path) {
     } else {
         // Load existing filesystem
         std::memcpy(&header, buffer, sizeof(FloudsHeader));
+
+        // Load allocation manager
+        char* allocation_manager_buffer = new char[header.allocation_manager_size];
+        allocation_manager->read(header.allocation_manager_handle, allocation_manager_buffer, header.allocation_manager_size, 0);
+        size_t offset = 0;
+        allocation_manager->deserialize(allocation_manager_buffer, &offset);
+        delete[] allocation_manager_buffer;
+
+        // Load FLOUDS
+        char* flouds_buffer = new char[header.flouds_size];
+        allocation_manager->read(header.flouds_handle, flouds_buffer, header.flouds_size, 0);
+        offset = 0;
+        std::cout << "Deserializing FLOUDS with size " << header.flouds_size << " bytes" << std::endl;
+        flouds->deserialize(flouds_buffer, &offset);
+        std::cout << *flouds << std::endl;
+        delete[] flouds_buffer;
     }
+}
+
+void FileSystemManager::unmount() {
+    this->save();
+    delete flouds;
+    delete allocation_manager;
+    delete block_device;
 }
 
 void FileSystemManager::save() {
@@ -73,64 +96,63 @@ void FileSystemManager::save() {
     block_device->write_block(0, (char*) &header);
 }
 
-void FileSystemManager::add_node(size_t parent_id, std::string name, bool is_folder, uint32_t mode) {
+void FileSystemManager::add_node(size_t parent_inode, std::string name, bool is_folder, uint32_t mode) {
+    flouds->insert(parent_inode, name, is_folder);
+}
+
+void FileSystemManager::remove_node(size_t inode) {
+    flouds->remove(inode);
+}
+
+void FileSystemManager::read_file(size_t inode, char* buffer, size_t size, size_t offset) {
+    
+}
+
+void FileSystemManager::write_file(size_t inode, const char* buffer, size_t size, size_t offset) {
     // TODO: Implement
 }
 
-void FileSystemManager::remove_node(size_t node_id) {
-    // TODO: Implement
-}
-
-void FileSystemManager::read_file(size_t node_id, char* buffer, size_t size, size_t offset) {
-    // TODO: Implement
-}
-
-void FileSystemManager::write_file(size_t node_id, const char* buffer, size_t size, size_t offset) {
-    // TODO: Implement
-}
-
-size_t FileSystemManager::get_file_size(size_t node_id) {
-    // TODO: Implement
-    return 0;
-}
-
-size_t FileSystemManager::set_file_size(size_t node_id, size_t size) {
+size_t FileSystemManager::get_file_size(size_t inode) {
     // TODO: Implement
     return 0;
 }
 
-time_t FileSystemManager::get_modification_time(size_t node_id) {
+void FileSystemManager::set_file_size(size_t inode, size_t size) {
+    // TODO: Implement
+}
+
+time_t FileSystemManager::get_modification_time(size_t inode) {
     // TODO: Implement
     return 0;
 }
 
-time_t FileSystemManager::get_access_time(size_t node_id) {
+time_t FileSystemManager::get_access_time(size_t inode) {
     // TODO: Implement
     return 0;
 }
 
-time_t FileSystemManager::get_creation_time(size_t node_id) {
+time_t FileSystemManager::get_creation_time(size_t inode) {
     // TODO: Implement
     return 0;
 }
 
-void FileSystemManager::set_modification_time(size_t node_id, time_t time) {
+void FileSystemManager::set_modification_time(size_t inode, time_t time) {
     // TODO: Implement
 }
 
-void FileSystemManager::set_access_time(size_t node_id, time_t time) {
+void FileSystemManager::set_access_time(size_t inode, time_t time) {
     // TODO: Implement
 }
 
-void FileSystemManager::set_creation_time(size_t node_id, time_t time) {
+void FileSystemManager::set_creation_time(size_t inode, time_t time) {
     // TODO: Implement
 }
 
-uint32_t FileSystemManager::get_mode(size_t node_id) {
+uint32_t FileSystemManager::get_mode(size_t inode) {
     // TODO: Implement
     return 0;
 }
 
-void FileSystemManager::set_mode(size_t node_id, uint32_t mode) {
+void FileSystemManager::set_mode(size_t inode, uint32_t mode) {
     // TODO: Implement
 }

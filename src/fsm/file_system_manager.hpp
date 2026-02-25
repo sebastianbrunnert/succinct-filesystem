@@ -27,6 +27,7 @@ struct FloudsHeader {
 
 /**
  * This class syncs the FLOUDS data structure with the block device and allows reading and writing of files and folders.
+ * It works with inode numbers and these are translated to FLOUDS node indices internally. Inode numbers stay stable even if the FLOUDS structure changes.
  */
 class FileSystemManager {
 private:
@@ -51,29 +52,67 @@ public:
     virtual void mount(std::string path);
 
     /**
+     * Unloads the filesystem.
+     */
+    virtual void unmount();
+
+    /**
      * Saves the current state of the filesystem to the block device.
      */
     virtual void save();
 
-    virtual void add_node(size_t parent_id, std::string name, bool is_folder, uint32_t mode);
+    /**
+     * Gets the FLOUDS data structure of the filesystem.
+     */
+    virtual Flouds* get_flouds() {
+        return flouds;
+    }
 
-    virtual void remove_node(size_t node_id);
+    /**
+     * Adds a node to the filesystem as a child of the specified parent node.
+     * 
+     * @param parent_inode The inode number of the parent node.
+     * @param name The name of the new node.
+     * @param is_folder true if the new node is a folder, false if it is a file.
+     * @param mode The permissions of the new node.
+     */
+    virtual void add_node(size_t parent_inode, std::string name, bool is_folder, uint32_t mode);
 
-    virtual void read_file(size_t node_id, char* buffer, size_t size, size_t offset);
+    /**
+     * Removes a node from the filesystem.
+     * 
+     * @param inode The inode number of the node to remove. Must be a valid inode.
+     */
+    virtual void remove_node(size_t inode);
 
-    virtual void write_file(size_t node_id, const char* buffer, size_t size, size_t offset);
+    virtual void read_file(size_t inode, char* buffer, size_t size, size_t offset);
 
-    virtual size_t get_file_size(size_t node_id);
-    virtual size_t set_file_size(size_t node_id, size_t size);
+    virtual void write_file(size_t inode, const char* buffer, size_t size, size_t offset);
 
-    virtual time_t get_modification_time(size_t node_id);
-    virtual time_t get_access_time(size_t node_id);
-    virtual time_t get_creation_time(size_t node_id);
-    virtual void set_modification_time(size_t node_id, time_t time);
-    virtual void set_access_time(size_t node_id, time_t time);
-    virtual void set_creation_time(size_t node_id, time_t time);
+    /**
+     * Gets the size of the file represented by the inode.
+     * 
+     * @param inode The inode number of the file. Must be a valid inode.
+     * @return The size of the file in bytes.
+     */
+    virtual size_t get_file_size(size_t inode);
 
-    virtual uint32_t get_mode(size_t node_id);
-    virtual void set_mode(size_t node_id, uint32_t mode);
+    /**
+     * Sets the size of the file represented by the inode. It allocates blocks as needed.
+     * 
+     * @param inode The inode number of the file. Must be a valid inode.
+     * @param size The new size of the file in bytes.
+     */
+    virtual void set_file_size(size_t inode, size_t size);
+
+    virtual time_t get_modification_time(size_t inode);
+    virtual time_t get_access_time(size_t inode);
+    virtual time_t get_creation_time(size_t inode);
+    virtual void set_modification_time(size_t inode, time_t time);
+    virtual void set_access_time(size_t inode, time_t time);
+    virtual void set_creation_time(size_t inode, time_t time);
+
+    virtual uint32_t get_mode(size_t inode);
+    virtual void set_mode(size_t inode, uint32_t mode);
 
 };
