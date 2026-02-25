@@ -11,6 +11,8 @@
 #include <fuse3/fuse_lowlevel.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <errno.h>
+#include <exception>
 #include "fsm/file_system_manager.hpp"
 
 FileSystemManager* fsm = nullptr;
@@ -25,8 +27,17 @@ static void flouds_init(void *userdata, struct fuse_conn_info *conn) {
     const char* image_path = (const char*) userdata;    
     printf("Loading filesystem from: %s\n", image_path);
 
-    fsm = new FileSystemManager();
-    fsm->mount(image_path);
+    try {
+        fsm = new FileSystemManager();
+        fsm->mount(image_path);
+        printf("Filesystem loaded successfully\n");
+    } catch (const std::exception& e) {
+        fprintf(stderr, "Error loading filesystem: %s\n", e.what());
+        if (fsm != nullptr) {
+            delete fsm;
+            fsm = nullptr;
+        }
+    }
 }
 
 /**
