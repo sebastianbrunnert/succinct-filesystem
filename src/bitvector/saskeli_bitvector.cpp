@@ -85,15 +85,28 @@ public:
     }
 
     void serialize(char* buffer, size_t* offset) override {
-
+        size_t size = this->size();
+        memcpy(buffer + *offset, &size, sizeof(size_t));
+        *offset += sizeof(size_t);
+        for (size_t i = 0; i < size; i++) {
+            buffer[*offset + i / 8] |= (access(i) ? 1 : 0) << (7 - i % 8);
+        }
+        *offset += (size + 7) / 8;
     }
 
     void deserialize(const char* buffer, size_t* offset) override {
-
+        size_t size;
+        memcpy(&size, buffer + *offset, sizeof(size_t));
+        *offset += sizeof(size_t);
+        for (size_t i = 0; i < size; i++) {
+            bool value = (buffer[*offset + i / 8] >> (7 - i % 8)) & 1;
+            saskeli.insert(i, value);
+        }
+        *offset += (size + 7) / 8;
     }
 
     size_t get_serialized_size() override {
-        return 0;
+        return (sizeof(size_t) + (size() + 7) / 8);
     }
 };
 #endif
