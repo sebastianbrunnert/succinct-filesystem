@@ -13,7 +13,21 @@ endif()
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(FUSE3 REQUIRED fuse3)
 
-add_executable(succinct_filesystem fuse.cpp)
+add_executable(succinct_filesystem 
+    fuse.cpp
+    bitvector/array_bitvector.cpp
+    bitvector/word_bitvector.cpp
+    bitvector/saskeli_bitvector.cpp
+    bitvector/adaptive_bitvector.cpp
+    name_sequence/array_name_sequence.cpp
+    name_sequence/concatenated_name_sequence.cpp
+    name_sequence/immer_name_sequence.cpp
+    name_sequence/map_name_sequence.cpp
+    flouds/flouds.cpp
+    block_device/block_device.cpp
+    fsm/allocation/best_fit_allocation.cpp
+    fsm/file_system_manager.cpp
+)
 
 # Link FUSE3 library
 target_link_libraries(succinct_filesystem ${FUSE3_LIBRARIES})
