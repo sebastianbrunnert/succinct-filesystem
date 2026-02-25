@@ -14,6 +14,8 @@
 #include <stddef.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 // FileSystemManager* fsm = nullptr;
 
@@ -207,8 +209,22 @@ int main(int argc, char *argv[]) {
     printf("11: Mounting filesystem\n");
     fflush(stdout);
     
+    // Check if mountpoint exists and is a directory
+    struct stat st;
+    if (stat(opts.mountpoint, &st) != 0) {
+        printf("ERROR: Mountpoint '%s' does not exist: %s\n", opts.mountpoint, strerror(errno));
+        goto cleanup_signal_handlers;
+    }
+    if (!S_ISDIR(st.st_mode)) {
+        printf("ERROR: Mountpoint '%s' is not a directory\n", opts.mountpoint);
+        goto cleanup_signal_handlers;
+    }
+    
+    printf("11.5: Mountpoint '%s' exists and is a directory\n", opts.mountpoint);
+    fflush(stdout);
+    
     if (fuse_session_mount(se, opts.mountpoint) != 0) {
-        printf("ERROR: Failed to mount\n");
+        printf("ERROR: fuse_session_mount failed: %s\n", strerror(errno));
         // Failed to mount the filesystem
         goto cleanup_signal_handlers;
     }
