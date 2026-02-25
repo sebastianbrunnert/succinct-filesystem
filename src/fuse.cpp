@@ -121,6 +121,7 @@ static const struct fuse_lowlevel_ops flouds_operations = {
  * The initialization is analogous to this default FUSE example: https://libfuse.github.io/doxygen/example_2hello__ll_8c.html
  */
 int main(int argc, char *argv[]) {
+    fprintf(stderr, "DEBUG: Starting main\n");
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
     struct fuse_session *se;
     struct fuse_cmdline_opts opts;
@@ -128,8 +129,10 @@ int main(int argc, char *argv[]) {
     const char *image_path = NULL;
     int ret = -1;
 
+    fprintf(stderr, "DEBUG: Initializing opts\n");
     memset(&opts, 0, sizeof(opts));
 
+    fprintf(stderr, "DEBUG: Extracting image path\n");
     // Extract the image path (first non-option argument) before parsing cmdline
     for (int i = 1; i < args.argc; i++) {
         if (args.argv[i][0] != '-') {
@@ -143,12 +146,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    fprintf(stderr, "DEBUG: Parsing cmdline args\n");
     // Parse the command line arguments. This will fill the opts structure with the relevant options for the FUSE session.
     if (fuse_parse_cmdline(&args, &opts) != 0) {
-        return 1;
-    }
-
-    if (opts.show_help) {
+        fprintf(stderr, "DEBUG: Showing help\n");
         // If the user requested help information, print it and exit.
         printf("usage: %s [options] <image> <mountpoint>\n\n", argv[0]);
         fuse_cmdline_help();
@@ -156,12 +157,17 @@ int main(int argc, char *argv[]) {
         ret = 0;
         goto cleanup_args;
     } else if (opts.show_version) {
+        fprintf(stderr, "DEBUG: Showing version\n");
         // If the user requested version information, print it and exit.
         fuse_lowlevel_version();
         ret = 0;
         goto cleanup_args;
     }
 
+    fprintf(stderr, "DEBUG: Checking args (image=%s, mountpoint=%s)\n", 
+            image_path ? image_path : "NULL", 
+            opts.mountpoint ? opts.mountpoint : "NULL");
+    
     if (image_path == NULL || opts.mountpoint == NULL) {
         // If image or mount point was not provided, print usage information and exit.
         printf("usage: %s [options] <image> <mountpoint>\n", argv[0]);
@@ -170,36 +176,59 @@ int main(int argc, char *argv[]) {
         goto cleanup_args;
     }
 
+    fprintf(stderr, "DEBUG: Creating FUSE session\n");
     // Create a new FUSE session with the parsed arguments and the defined operations.
     // Pass image_path as userdata so it is available in flouds_init
     se = fuse_session_new(&args, &flouds_operations, sizeof(flouds_operations), (void*) image_path);
 
     if(se == NULL) {
+        fprintf(stderr, "DEBUG: Failed to create FUSE session\n");
         // Session could not be created
         goto cleanup_args;
     }
+    fprintf(stderr, "DEBUG: FUSE session created\n");
 
+    fprintf(stderr, "DEBUG: Setting signal handlers\n");
     if (fuse_set_signal_handlers(se) != 0) {
+        fprintf(stderr, "DEBUG: Failed to set signal handlers\n");
         // Failed to set signal handlers
         goto cleanup_session;
     }
 
+    fprintf(stderr, "DEBUG: Mounting at %s\n", opts.mountpoint);
     if (fuse_session_mount(se, opts.mountpoint) != 0) {
+        fprintf(stderr, "DEBUG: Failed to mount filesystem\n");
         // Failed to mount the filesystem
         goto cleanup_signal_handlers;
     }
+    fprintf(stderr, "DEBUG: Mounted successfully\n");
 
+    fprintf(stderr, "DEBUG: Daemonizing (foreground=%d)\n", opts.foreground);
     // Daemonize the process if the --foreground option is not set.
     fuse_daemonize(opts.foreground);
 
+    fprintf(stderr, "DEBUG: Starting main loop (singlethread=%d)\n", opts.singlethread);
     // Block until ctrl-c or fusermount -u is issued.
     if (opts.singlethread) {
         ret = fuse_session_loop(se);
     } else {
         config = fuse_loop_cfg_create();
         if (config == NULL) {
-            fprintf(stderr, "Failed to create loop config\n");
-            goto cleanup_unmount;
+     printf(stderr, "DEBUG: Unmounting\n");
+    fuse_session_unmount(se);
+cleanup_signal_handlers:
+    fprintf(stderr, "DEBUG: Removing signal handlers\n");
+    fuse_remove_signal_handlers(se);
+cleanup_session:
+    fprintf(stderr, "DEBUG: Destroying session\n");
+    fuse_session_destroy(se);
+cleanup_args:
+    fprintf(stderr, "DEBUG: Cleanup args\n");
+    free(opts.mountpoint);
+    fuse_opt_free_args(&args);
+
+    fprintf(stderr, "DEBUG: Exiting with code %d\n", ret ? 1 : 0);    }
+    fprintf(stderr, "DEBUG: Main loop exited with ret=%d\n", ret);       goto cleanup_unmount;
         }
         fuse_loop_cfg_set_clone_fd(config, opts.clone_fd);
         fuse_loop_cfg_set_max_threads(config, opts.max_threads);
