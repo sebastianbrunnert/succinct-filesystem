@@ -1,6 +1,3 @@
-
-
-
 /**
  * This file is part of the Succinct Filesystem project.
  * 
@@ -8,16 +5,11 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-// FUSE API version 31 is for FUSE 3.x (compatible with 3.0 through 3.17)
 #define FUSE_USE_VERSION 31
 
 #include <fuse3/fuse_lowlevel.h>
 #include <stdio.h>
 #include <stddef.h>
-#include <errno.h>
-#include "fsm/file_system_manager.hpp"
-
-FileSystemManager* fsm = nullptr;
 
 /**
  * This function is called when the FUSE session is being initialized. It can be used to set up any necessary state or resources for the filesystem.
@@ -26,13 +18,8 @@ FileSystemManager* fsm = nullptr;
  * @param conn Connection information about the FUSE session
  */
 static void flouds_init(void *userdata, struct fuse_conn_info *conn) {
-    const char* image_path = (const char*) userdata;    
+    const char *image_path = (const char*) userdata;    
     printf("Loading filesystem from: %s\n", image_path);
-
-    /*
-    fsm = new FileSystemManager();
-    fsm->mount(image_path);
-    */
 }
 
 /**
@@ -41,10 +28,6 @@ static void flouds_init(void *userdata, struct fuse_conn_info *conn) {
  * @param userdata The user data passed to fuse_session_new()
  */
 static void flouds_destroy(void *userdata) {
-    if (fsm != nullptr) {
-        fsm->unmount();
-        delete fsm;
-    }
 }
 
 /**
@@ -55,7 +38,6 @@ static void flouds_destroy(void *userdata) {
  * @param name The name of the entry being looked up within the parent directory.
  */
 static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
-    fuse_reply_err(req, ENOSYS);
 }
 
 /**
@@ -66,7 +48,6 @@ static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
  * @param fi Internal file information.
  */
 static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
-    fuse_reply_err(req, ENOSYS);
 }
 
 /**
@@ -77,7 +58,6 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
-    fuse_reply_err(req, ENOSYS);
 }
 
 /**
@@ -90,7 +70,6 @@ static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
-    fuse_reply_err(req, ENOSYS);
 }
 
 /**
@@ -103,7 +82,6 @@ static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
  * @param fi Internal file information.
  */
 static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
-    fuse_reply_err(req, ENOSYS);
 }
 
 // This structure defines the operation that our FUSE filesystem supports.
@@ -122,8 +100,6 @@ static const struct fuse_lowlevel_ops flouds_operations = {
  * The initialization is analogous to this default FUSE example: https://libfuse.github.io/doxygen/example_2hello__ll_8c.html
  */
 int main(int argc, char *argv[]) {
-    printf("1");
-
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
     struct fuse_session *se;
     struct fuse_cmdline_opts opts;
