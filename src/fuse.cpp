@@ -6,7 +6,8 @@
  */
 
 // We use FUSE 3.18, which is the latest stable release as of February 2026.
-#define FUSE_USE_VERSION FUSE_MAKE_VERSION(3, 18)
+// If this causes issues, try lowering to 3.10 or 3.2
+#define FUSE_USE_VERSION 31
 
 #include <fuse3/fuse_lowlevel.h>
 #include <stdio.h>
@@ -160,6 +161,10 @@ int main(int argc, char *argv[]) {
     printf("7: fuse_parse_cmdline succeeded\n");
     fflush(stdout);
 
+    printf("7.1: FUSE version check\n");
+    printf("Compiled with FUSE version: %d\n", FUSE_USE_VERSION);
+    fflush(stdout);
+
     if (opts.show_help) {
         // If the user requested help information, print it and exit.
         printf("usage: %s [options] <image> <mountpoint>\n\n", argv[0]);
@@ -223,7 +228,19 @@ int main(int argc, char *argv[]) {
     printf("11.5: Mountpoint '%s' exists and is a directory\n", opts.mountpoint);
     fflush(stdout);
     
-    if (fuse_session_mount(se, opts.mountpoint) != 0) {
+    printf("11.6: About to call fuse_session_mount (se=%p, mountpoint='%s')\n", (void*)se, opts.mountpoint);
+    fflush(stdout);
+    
+    printf("11.7: Forcing foreground mode to debug\n");
+    opts.foreground = 1;
+    opts.singlethread = 1;
+    fflush(stdout);
+    
+    int mount_ret = fuse_session_mount(se, opts.mountpoint);
+    printf("11.8: fuse_session_mount returned %d\n", mount_ret);
+    fflush(stdout);
+    
+    if (mount_ret != 0) {
         printf("ERROR: fuse_session_mount failed: %s\n", strerror(errno));
         // Failed to mount the filesystem
         goto cleanup_signal_handlers;
