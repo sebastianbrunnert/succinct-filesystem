@@ -11,6 +11,9 @@
 #include <fuse3/fuse_lowlevel.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/stat.h>
 #include "fsm/file_system_manager.hpp"
 
 FileSystemManager* file_system_manager = nullptr;
@@ -34,6 +37,8 @@ static void flouds_init(void *userdata, struct fuse_conn_info *conn) {
  * @param userdata The user data passed to fuse_session_new()
  */
 static void flouds_destroy(void *userdata) {
+    file_system_manager->unmount();
+    delete file_system_manager;
 }
 
 /**
@@ -44,6 +49,8 @@ static void flouds_destroy(void *userdata) {
  * @param name The name of the entry being looked up within the parent directory.
  */
 static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
+    // For now, no files exist, so all lookups fail
+    fuse_reply_err(req, ENOENT);
 }
 
 /**
@@ -54,6 +61,18 @@ static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
  * @param fi Internal file information.
  */
 static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+    struct stat stbuf;
+    memset(&stbuf, 0, sizeof(stbuf));
+    
+    if (ino == FUSE_ROOT_ID) {
+        // Root directory (inode 1)
+        stbuf.st_ino = FUSE_ROOT_ID;
+        stbuf.st_mode = S_IFDIR | 0755;
+        stbuf.st_nlink = 2;
+        fuse_reply_attr(req, &stbuf, 1.0);
+    } else {
+        fuse_reply_err(req, ENOENT);
+    }
 }
 
 /**
@@ -64,6 +83,8 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+    // No files exist yet, only directories
+    fuse_reply_err(req, ENOENT);
 }
 
 /**
@@ -76,6 +97,8 @@ static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
+    // No files exist yet
+    fuse_reply_err(req, ENOENT);
 }
 
 /**
@@ -88,7 +111,48 @@ static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
  * @param fi Internal file information.
  */
 static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
-    fuse_reply_buf(req, "", 0);
+    if (ino != FUSE_ROOT_ID) {
+        fuse_reply_err(req, ENOTDIR);
+        return;
+    }
+
+    // Empty directory: only . and .. entries
+    struct stat stbuf;
+    memset(&stbuf, 0, sizeof(stbuf));
+    
+    char buf[4096];
+    size_t bufsize = sizeof(buf);
+    char *p = buf;
+    size_t rem = bufsize;
+    
+    // Add "." entry
+    if (off == 0) {
+        stbuf.st_ino = FUSE_ROOT_ID;
+        stbuf.st_mode = S_IFDIR;
+        size_t entsize = fuse_add_direntry(req, p, rem, ".", &stbuf, 1);
+        if (entsize > rem) {
+            fuse_reply_buf(req, buf, bufsize - rem);
+            return;
+        }
+        p += entsize;
+        rem -= entsize;
+    }
+    
+    // Add ".." entry
+    if (off <= 1) {
+        stbuf.st_ino = FUSE_ROOT_ID;
+        stbuf.st_mode = S_IFDIR;
+        size_t entsize = fuse_add_direntry(req, p, rem, "..", &stbuf, 2);
+        if (entsize > rem) {
+            fuse_reply_buf(req, buf, bufsize - rem);
+            return;
+        }
+        p += entsize;
+        rem -= entsize;
+    }
+    
+    // End of directory
+    fuse_reply_buf(req, buf, bufsize - rem);
 }
 
 // This structure defines the operation that our FUSE filesystem supports.
