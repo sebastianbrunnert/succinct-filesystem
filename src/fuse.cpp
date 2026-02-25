@@ -10,7 +10,10 @@
 
 #include <fuse3/fuse_lowlevel.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stddef.h>
+#include <errno.h>
+#include <string.h>
 #include "fsm/file_system_manager.hpp"
 
 FileSystemManager* fsm = nullptr;
@@ -25,8 +28,10 @@ static void flouds_init(void *userdata, struct fuse_conn_info *conn) {
     const char* image_path = (const char*) userdata;    
     printf("Loading filesystem from: %s\n", image_path);
 
+    /*
     fsm = new FileSystemManager();
     fsm->mount(image_path);
+    */
 }
 
 /**
@@ -49,6 +54,7 @@ static void flouds_destroy(void *userdata) {
  * @param name The name of the entry being looked up within the parent directory.
  */
 static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
+    fuse_reply_err(req, ENOSYS);
 }
 
 /**
@@ -59,6 +65,7 @@ static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
  * @param fi Internal file information.
  */
 static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+    fuse_reply_err(req, ENOSYS);
 }
 
 /**
@@ -69,6 +76,7 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+    fuse_reply_err(req, ENOSYS);
 }
 
 /**
@@ -81,6 +89,7 @@ static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
+    fuse_reply_err(req, ENOSYS);
 }
 
 /**
@@ -93,6 +102,7 @@ static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
  * @param fi Internal file information.
  */
 static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
+    fuse_reply_err(req, ENOSYS);
 }
 
 // This structure defines the operation that our FUSE filesystem supports.
@@ -114,9 +124,11 @@ int main(int argc, char *argv[]) {
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
     struct fuse_session *se;
     struct fuse_cmdline_opts opts;
-    struct fuse_loop_config *config;
+    struct fuse_loop_config *config = NULL;
     const char *image_path = NULL;
     int ret = -1;
+
+    memset(&opts, 0, sizeof(opts));
 
     // Extract the image path (first non-option argument) before parsing cmdline
     for (int i = 1; i < args.argc; i++) {
@@ -185,19 +197,24 @@ int main(int argc, char *argv[]) {
         ret = fuse_session_loop(se);
     } else {
         config = fuse_loop_cfg_create();
+        if (config == NULL) {
+            fprintf(stderr, "Failed to create loop config\n");
+            goto cleanup_unmount;
+        }
         fuse_loop_cfg_set_clone_fd(config, opts.clone_fd);
         fuse_loop_cfg_set_max_threads(config, opts.max_threads);
         ret = fuse_session_loop_mt(se, config);
         fuse_loop_cfg_destroy(config);
-        config = NULL;
     }
 
+cleanup_unmount:
     fuse_session_unmount(se);
 cleanup_signal_handlers:
     fuse_remove_signal_handlers(se);
 cleanup_session:
     fuse_session_destroy(se);
 cleanup_args:
+    free(opts.mountpoint);
     fuse_opt_free_args(&args);
 
     return ret ? 1 : 0;
