@@ -23,7 +23,6 @@ FileSystemManager* file_system_manager = nullptr;
  */
 static void flouds_init(void *userdata, struct fuse_conn_info *conn) {
     const char *image_path = (const char*) userdata;    
-    printf("Loading filesystem from: %s\n", image_path);
 
     file_system_manager = new FileSystemManager();
     file_system_manager->mount(image_path);
