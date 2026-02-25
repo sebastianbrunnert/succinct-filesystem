@@ -10,6 +10,7 @@
 
 #include <fuse3/fuse_lowlevel.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
 #include <errno.h>
@@ -119,13 +120,22 @@ int main(int argc, char *argv[]) {
     printf("2\n");
     fflush(stdout);
 
+    printf("3: Initializing fuse_args\n");
+    fflush(stdout);
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
-    struct fuse_session *se;
+    printf("4: fuse_args initialized\n");
+    fflush(stdout);
+    
+    struct fuse_session *se = NULL;
     struct fuse_cmdline_opts opts;
-    struct fuse_loop_config *config;
+    struct fuse_loop_config *config = NULL;
     const char *image_path = NULL;
     int ret = -1;
 
+    memset(&opts, 0, sizeof(opts));
+
+    printf("5: Starting arg extraction\n");
+    fflush(stdout);
     // Extract the image path (first non-option argument) before parsing cmdline
     for (int i = 1; i < args.argc; i++) {
         if (args.argv[i][0] != '-') {
@@ -139,10 +149,14 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    printf("6: Calling fuse_parse_cmdline\n");
+    fflush(stdout);
     // Parse the command line arguments. This will fill the opts structure with the relevant options for the FUSE session.
     if (fuse_parse_cmdline(&args, &opts) != 0) {
         return 1;
     }
+    printf("7: fuse_parse_cmdline succeeded\n");
+    fflush(stdout);
 
     if (opts.show_help) {
         // If the user requested help information, print it and exit.
@@ -166,47 +180,75 @@ int main(int argc, char *argv[]) {
         goto cleanup_args;
     }
 
+    printf("8: Creating fuse session (ops size=%zu)\n", sizeof(flouds_operations));
+    fflush(stdout);
     // Create a new FUSE session with the parsed arguments and the defined operations.
     // Pass image_path as userdata so it is available in flouds_init
     se = fuse_session_new(&args, &flouds_operations, sizeof(flouds_operations), (void*) image_path);
 
+    printf("9: fuse_session_new returned\n");
+    fflush(stdout);
+    
     if(se == NULL) {
+        printf("ERROR: Session is NULL\n");
         // Session could not be created
         goto cleanup_args;
     }
+    
+    printf("10: Setting signal handlers\n");
+    fflush(stdout);
 
     if (fuse_set_signal_handlers(se) != 0) {
+        printf("ERROR: Failed to set signal handlers\n");
         // Failed to set signal handlers
         goto cleanup_session;
     }
 
+    printf("11: Mounting filesystem\n");
+    fflush(stdout);
+    
     if (fuse_session_mount(se, opts.mountpoint) != 0) {
+        printf("ERROR: Failed to mount\n");
         // Failed to mount the filesystem
         goto cleanup_signal_handlers;
     }
 
-    // Daemonize the process if the --foreground option is not set.
-    fuse_daemonize(opts.foreground);
-
-    // Block until ctrl-c or fusermount -u is issued.
+    printf("12: Starting main loop\n");
+    fflush(stdout);
+    
     if (opts.singlethread) {
         ret = fuse_session_loop(se);
     } else {
         config = fuse_loop_cfg_create();
+        if (config == NULL) {
+            printf("ERROR: Failed to create loop config\n");
+            goto cleanup_unmount;
+        }
         fuse_loop_cfg_set_clone_fd(config, opts.clone_fd);
         fuse_loop_cfg_set_max_threads(config, opts.max_threads);
         ret = fuse_session_loop_mt(se, config);
         fuse_loop_cfg_destroy(config);
-        config = NULL;
     }
 
-    fuse_session_unmount(se);
+cleanup_unmount:
+    printf("DEBUG: cleanup_unmount\n");
+    fflush(stdout);
+    if (se) fuse_session_unmount(se);
 cleanup_signal_handlers:
-    fuse_remove_signal_handlers(se);
+    printf("DEBUG: cleanup_signal_handlers\n");
+    fflush(stdout);
+    if (se) fuse_remove_signal_handlers(se);
 cleanup_session:
-    fuse_session_destroy(se);
+    printf("DEBUG: cleanup_session\n");
+    fflush(stdout);
+    if (se) fuse_session_destroy(se);
 cleanup_args:
+    printf("DEBUG: cleanup_args\n");
+    fflush(stdout);
+    if (opts.mountpoint) free(opts.mountpoint);
     fuse_opt_free_args(&args);
 
+    printf("DEBUG: Exiting\n");
+    fflush(stdout);
     return ret ? 1 : 0;
 }
