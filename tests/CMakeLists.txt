@@ -6,19 +6,6 @@
 # Automatically discover all test files matching test_*.cpp pattern
 file(GLOB TEST_SOURCES "test_*.cpp")
 
-# Define C sources from adaptive_dynamic_bitvector
-set(ADAPTIVE_BV_C_SOURCES
-    ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/hybridBV.c
-    ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/hybridId.c
-    ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/basics.c
-    ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/leafBV.c
-    ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/leafId.c
-    ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/staticBV.c
-)
-
-# Mark these as C language files explicitly
-set_source_files_properties(${ADAPTIVE_BV_C_SOURCES} PROPERTIES LANGUAGE C)
-
 include(GoogleTest)
 
 foreach(TEST_SOURCE ${TEST_SOURCES})
@@ -32,7 +19,12 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
         ${CMAKE_SOURCE_DIR}/src/bitvector/word_bitvector.cpp
         ${CMAKE_SOURCE_DIR}/src/bitvector/saskeli_bitvector.cpp
         ${CMAKE_SOURCE_DIR}/src/bitvector/adaptive_bitvector.cpp
-        ${ADAPTIVE_BV_C_SOURCES}
+        ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/hybridBV.c
+        ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/hybridId.c
+        ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/basics.c
+        ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/leafBV.c
+        ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/leafId.c
+        ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/staticBV.c
         ${CMAKE_SOURCE_DIR}/src/name_sequence/array_name_sequence.cpp
         ${CMAKE_SOURCE_DIR}/src/name_sequence/concatenated_name_sequence.cpp
         ${CMAKE_SOURCE_DIR}/src/name_sequence/immer_name_sequence.cpp
