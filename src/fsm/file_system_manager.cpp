@@ -101,8 +101,8 @@ void FileSystemManager::save() {
     block_device->write_block(0, (char*) &header);
 }
 
-void FileSystemManager::add_node(size_t parent_inode, std::string name, bool is_folder, uint32_t mode) {
-    flouds->insert(parent_inode, name, is_folder);
+size_t FileSystemManager::add_node(size_t parent_inode, std::string name, bool is_folder, uint32_t mode) {
+    return flouds->insert(parent_inode, name, is_folder);
 }
 
 void FileSystemManager::remove_node(size_t inode) {

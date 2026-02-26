@@ -49,7 +49,7 @@ static void flouds_destroy(void *userdata) {
  * @param name The name of the entry being looked up within the parent directory.
  */
 static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
-    // Convert FUSE inode to FLOUDS node index (FUSE uses 1-based, FLOUDS uses 0-based)
+    // Convert FUSE inode to FLOUDS inode
     size_t parent_node = parent - 1;
     
     Flouds* flouds = file_system_manager->get_flouds();
@@ -103,7 +103,7 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
     struct stat stbuf;
     memset(&stbuf, 0, sizeof(stbuf));
     
-    // Convert FUSE inode to FLOUDS node index
+    // Convert FUSE inode to FLOUDS inode
     size_t node = ino - 1;
     
     Flouds* flouds = file_system_manager->get_flouds();
@@ -126,6 +126,60 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
 }
 
 /**
+ * This function is called when file or directory attributes need to be changed.
+ * 
+ * @param req The request handle that contains information about the setattr request and is used to send the response back to the kernel.
+ * @param ino The inode number of the file or directory whose attributes are being changed.
+ * @param attr The new attributes to set.
+ * @param to_set Bitmask indicating which attributes should be changed.
+ * @param fi Internal file information.
+ */
+static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi) {
+    size_t node = ino - 1;
+    
+    Flouds* flouds = file_system_manager->get_flouds();
+    
+    try {
+        // Handle different attribute changes
+        if (to_set & FUSE_SET_ATTR_MODE) {
+            file_system_manager->set_mode(node, attr->st_mode);
+        }
+        
+        if (to_set & FUSE_SET_ATTR_SIZE) {
+            if (flouds->is_file(node)) {
+                file_system_manager->set_file_size(node, attr->st_size);
+            }
+        }
+        
+        if (to_set & FUSE_SET_ATTR_ATIME) {
+            file_system_manager->set_access_time(node, attr->st_atime);
+        }
+        
+        if (to_set & FUSE_SET_ATTR_MTIME) {
+            file_system_manager->set_modification_time(node, attr->st_mtime);
+        }
+        
+        // Return the updated attributes
+        struct stat stbuf;
+        memset(&stbuf, 0, sizeof(stbuf));
+        stbuf.st_ino = ino;
+        
+        if (flouds->is_folder(node)) {
+            stbuf.st_mode = S_IFDIR | 0755;
+            stbuf.st_nlink = 2;
+        } else if (flouds->is_file(node)) {
+            stbuf.st_mode = S_IFREG | 0644;
+            stbuf.st_nlink = 1;
+            stbuf.st_size = file_system_manager->get_file_size(node);
+        }
+        
+        fuse_reply_attr(req, &stbuf, 1.0);
+    } catch (...) {
+        fuse_reply_err(req, EIO);
+    }
+}
+
+/**
  * This function is called when a file is being opened.
  * 
  * @param req The request handle that contains information about the open request and is used to send the response back to the kernel.
@@ -133,8 +187,18 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
-    // No files exist yet, only directories
-    fuse_reply_err(req, ENOENT);
+    size_t node = ino - 1;
+    
+    Flouds* flouds = file_system_manager->get_flouds();
+    
+    // Check if the node exists and is a file
+    if (flouds->is_file(node)) {
+        fuse_reply_open(req, fi);
+    } else if (flouds->is_folder(node)) {
+        fuse_reply_err(req, EISDIR);
+    } else {
+        fuse_reply_err(req, ENOENT);
+    }
 }
 
 /**
@@ -161,11 +225,9 @@ static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
  * @param fi Internal file information.
  */
 static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
-    // Convert FUSE inode to FLOUDS node index
     size_t node = ino - 1;
     
     Flouds* flouds = file_system_manager->get_flouds();
-    
     if (!flouds->is_folder(node)) {
         fuse_reply_err(req, ENOTDIR);
         return;
@@ -197,7 +259,7 @@ static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t of
     
     // Add ".." entry
     if (off <= current_off) {
-        stbuf.st_ino = ino;  // Simplified: parent is self for now
+        stbuf.st_ino = ino;
         stbuf.st_mode = S_IFDIR;
         size_t entsize = fuse_add_direntry(req, p, rem, "..", &stbuf, current_off + 1);
         if (entsize > rem) {
@@ -209,14 +271,14 @@ static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t of
     }
     current_off++;
     
-    // Add actual directory entries from FLOUDS
+    // Add directory entries from FLOUDS
     size_t num_children = flouds->children_count(node);
     for (size_t i = 0; i < num_children; i++) {
         if (off <= current_off) {
             size_t child_node = flouds->child(node, i);
             std::string child_name = flouds->get_name(child_node);
             
-            stbuf.st_ino = child_node + 1;  // Convert to FUSE inode
+            stbuf.st_ino = child_node + 1;
             if (flouds->is_folder(child_node)) {
                 stbuf.st_mode = S_IFDIR;
             } else {
@@ -247,29 +309,21 @@ static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t of
  * @param mode The permissions for the new directory.
  */
 static void flouds_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode) {
-    // Convert FUSE inode to FLOUDS node index
     size_t parent_node = parent - 1;
     
     try {
         // Create the new directory
-        file_system_manager->add_node(parent_node, name, true, mode);
-        
-        // Find the newly created node to return its attributes
-        Flouds* flouds = file_system_manager->get_flouds();
-        size_t num_children = flouds->children_count(parent_node);
-        size_t new_node = flouds->child(parent_node, num_children - 1);
-        
+        size_t new_node = file_system_manager->add_node(parent_node, name, true, mode);
+    
         struct fuse_entry_param entry;
         memset(&entry, 0, sizeof(entry));
         
-        entry.ino = new_node + 1;  // Convert to FUSE inode
+        // Convert to FUSE inode
+        entry.ino = new_node + 1;
         entry.attr.st_ino = entry.ino;
-        entry.attr.st_mode = S_IFDIR | 0755;
+        entry.attr.st_mode = S_IFDIR | mode;
         entry.attr.st_nlink = 2;
-        
-        entry.attr_timeout = 1.0;
-        entry.entry_timeout = 1.0;
-        
+
         fuse_reply_entry(req, &entry);
     } catch (...) {
         fuse_reply_err(req, EIO);
@@ -286,34 +340,108 @@ static void flouds_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mo
  * @param fi File information structure that can be used to store state about the open file.
  */
 static void flouds_create(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode, struct fuse_file_info *fi) {
-    // Convert FUSE inode to FLOUDS node index
     size_t parent_node = parent - 1;
     
     try {
         // Create the new file
-        file_system_manager->add_node(parent_node, name, false, mode);
-        
-        // Find the newly created node to return its attributes
-        Flouds* flouds = file_system_manager->get_flouds();
-        size_t num_children = flouds->children_count(parent_node);
-        size_t new_node = flouds->child(parent_node, num_children - 1);
+        size_t new_node = file_system_manager->add_node(parent_node, name, false, mode);
         
         struct fuse_entry_param entry;
         memset(&entry, 0, sizeof(entry));
-        
-        entry.ino = new_node + 1;  // Convert to FUSE inode
+
+        // Convert to FUSE inode
+        entry.ino = new_node + 1;
         entry.attr.st_ino = entry.ino;
-        entry.attr.st_mode = S_IFREG | 0644;
+        entry.attr.st_mode = S_IFREG | mode;
         entry.attr.st_nlink = 1;
         entry.attr.st_size = 0;
-        
-        entry.attr_timeout = 1.0;
-        entry.entry_timeout = 1.0;
         
         fuse_reply_create(req, &entry, fi);
     } catch (...) {
         fuse_reply_err(req, EIO);
     }
+}
+
+/**
+ * This function is called when a file is being deleted.
+ * 
+ * @param req The request handle that contains information about the unlink request and is used to send the response back to the kernel.
+ * @param parent The inode number of the parent directory containing the file to be deleted.
+ * @param name The name of the file to be deleted.
+ */
+static void flouds_unlink(fuse_req_t req, fuse_ino_t parent, const char *name) {
+    size_t parent_node = parent - 1;
+    
+    Flouds* flouds = file_system_manager->get_flouds();
+    
+    // Find the child node with the given name
+    size_t num_children = flouds->children_count(parent_node);
+    for (size_t i = 0; i < num_children; i++) {
+        size_t child_node = flouds->child(parent_node, i);
+        if (flouds->get_name(child_node) == name) {
+            // Check if it's a file (not a directory)
+            if (flouds->is_folder(child_node)) {
+                fuse_reply_err(req, EISDIR);
+                return;
+            }
+            
+            try {
+                // Remove the file
+                file_system_manager->remove_node(child_node);
+                fuse_reply_err(req, 0);
+            } catch (...) {
+                fuse_reply_err(req, EIO);
+            }
+            return;
+        }
+    }
+    
+    // File not found
+    fuse_reply_err(req, ENOENT);
+}
+
+/**
+ * This function is called when a directory is being deleted.
+ * 
+ * @param req The request handle that contains information about the rmdir request and is used to send the response back to the kernel.
+ * @param parent The inode number of the parent directory containing the directory to be deleted.
+ * @param name The name of the directory to be deleted.
+ */
+static void flouds_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name) {
+    size_t parent_node = parent - 1;
+    
+    Flouds* flouds = file_system_manager->get_flouds();
+    
+    // Find the child node with the given name
+    size_t num_children = flouds->children_count(parent_node);
+    for (size_t i = 0; i < num_children; i++) {
+        size_t child_node = flouds->child(parent_node, i);
+        if (flouds->get_name(child_node) == name) {
+            // Check if it's a directory (not a file)
+            if (!flouds->is_folder(child_node)) {
+                fuse_reply_err(req, ENOTDIR);
+                return;
+            }
+            
+            // Check if directory is empty
+            if (!flouds->is_empty_folder(child_node)) {
+                fuse_reply_err(req, ENOTEMPTY);
+                return;
+            }
+            
+            try {
+                // Remove the directory
+                file_system_manager->remove_node(child_node);
+                fuse_reply_err(req, 0);
+            } catch (...) {
+                fuse_reply_err(req, EIO);
+            }
+            return;
+        }
+    }
+    
+    // Directory not found
+    fuse_reply_err(req, ENOENT);
 }
 
 // This structure defines the operation that our FUSE filesystem supports.
@@ -322,10 +450,13 @@ static const struct fuse_lowlevel_ops flouds_operations = {
     .destroy = flouds_destroy,
     .lookup = flouds_lookup,
     .getattr = flouds_getattr,
+    .setattr = flouds_setattr,
+    .mkdir = flouds_mkdir,
+    .unlink = flouds_unlink,
+    .rmdir = flouds_rmdir,
     .open = flouds_open,
     .read = flouds_read,
     .readdir = flouds_readdir,
-    .mkdir = flouds_mkdir,
     .create = flouds_create
 };
 

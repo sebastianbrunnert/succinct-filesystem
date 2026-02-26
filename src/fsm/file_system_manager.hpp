@@ -80,8 +80,9 @@ public:
      * @param name The name of the new node.
      * @param is_folder true if the new node is a folder, false if it is a file.
      * @param mode The permissions of the new node.
+     * @return The inode number of the newly created node.
      */
-    virtual void add_node(size_t parent_inode, std::string name, bool is_folder, uint32_t mode);
+    size_t add_node(size_t parent_inode, std::string name, bool is_folder, uint32_t mode);
 
     /**
      * Removes a node from the filesystem.
