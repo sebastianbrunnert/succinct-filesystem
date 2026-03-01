@@ -149,7 +149,7 @@ void FileSystemManager::write_file(size_t inode, const char* buffer, size_t size
 
 void FileSystemManager::set_file_size(size_t inode, size_t size) {
     Inode* node = inode_manager->get_inode(inode);
-    allocation_manager->resize(node->allocation_handle, node->size, size);
+    node->allocation_handle = allocation_manager->resize(node->allocation_handle, node->size, size);
     node->size = size;
 }
 
