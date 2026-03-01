@@ -254,6 +254,7 @@ static void flouds_write(fuse_req_t req, fuse_ino_t ino, const char *buf, size_t
     file_system_manager->write_file(node, buf, size, off);
     
     fuse_reply_write(req, size);
+}
 
 /**
  * This function is called when the contents of a directory are being read.
