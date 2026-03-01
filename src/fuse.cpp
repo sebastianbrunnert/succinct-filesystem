@@ -77,7 +77,7 @@ static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
                 entry.attr.st_mode = S_IFDIR | 0755;
             } else {
                 entry.attr.st_mode = S_IFREG | 0644;
-                entry.attr.st_size = file_system_manager->get_file_size(child_node);
+                entry.attr.st_size = file_system_manager->get_inode(child_node)->size;
             }
             
             entry.attr_timeout = 1.0;
