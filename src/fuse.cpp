@@ -112,7 +112,6 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
     if (flouds->is_folder(node)) {
         stbuf.st_mode = S_IFDIR | inode->mode;
         stbuf.st_nlink = 2;
-        stbuf.st_size = block_device->get_block_size();
     } else if (flouds->is_file(node)) {
         stbuf.st_mode = S_IFREG | inode->mode;
         stbuf.st_nlink = 1;
@@ -151,15 +150,15 @@ static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, in
         }
         
         if (to_set & FUSE_SET_ATTR_SIZE && flouds->is_file(node)) {
-            file_system_manager->set_file_size(node, attr->st_size);
+            inode->size = attr->st_size;
         }
         
         if (to_set & FUSE_SET_ATTR_ATIME) {
-            file_system_manager->set_access_time(node, attr->st_atime);
+            inode->access_time = attr->st_atime;
         }
         
         if (to_set & FUSE_SET_ATTR_MTIME) {
-            file_system_manager->set_modification_time(node, attr->st_mtime);
+            inode->modification_time = attr->st_mtime;
         }
         
         // Return the updated attributes
@@ -170,7 +169,6 @@ static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, in
         if (flouds->is_folder(node)) {
             stbuf.st_mode = S_IFDIR | inode->mode;
             stbuf.st_nlink = 2;
-            stbuf.st_size = block_device->get_block_size();
         } else if (flouds->is_file(node)) {
             stbuf.st_mode = S_IFREG | inode->mode;
             stbuf.st_nlink = 1;
