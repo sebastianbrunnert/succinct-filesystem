@@ -202,8 +202,6 @@ static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
     // Check if the node exists and is a file
     if (flouds->is_file(node)) {
         fuse_reply_open(req, fi);
-    } else if (flouds->is_folder(node)) {
-        fuse_reply_err(req, EISDIR);
     } else {
         fuse_reply_err(req, ENOENT);
     }
@@ -219,9 +217,43 @@ static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
-    // No files exist yet
-    fuse_reply_err(req, ENOENT);
+    size_t node = ino - 1;
+    
+    Flouds* flouds = file_system_manager->get_flouds();
+    if (!flouds->is_file(node)) {
+        fuse_reply_err(req, ENOENT);
+        return;
+    }
+
+    char* buffer = new char[size];
+    file_system_manager->read_file(node, buffer, size, off);
+    
+    fuse_reply_buf(req, buffer, size);
+    delete[] buffer;
 }
+
+/**
+ * This function is called when the contents of a file are being written.
+ * 
+ * @param req The request handle that contains information about the write request and is used to send the response back to the kernel.
+ * @param ino The inode number of the file being written to.
+ * @param buf The buffer containing the data to write to the file. Must be at least size bytes.
+ * @param size The number of bytes to write from the buffer to the file.
+ * @param off The offset within the file from which to start writing.
+ * @param fi Internal file information that can be used to store state about the open file.
+ */
+static void flouds_write(fuse_req_t req, fuse_ino_t ino, const char *buf, size_t size, off_t off, struct fuse_file_info *fi) {
+    size_t node = ino - 1;
+    
+    Flouds* flouds = file_system_manager->get_flouds();
+    if (!flouds->is_file(node)) {
+        fuse_reply_err(req, ENOENT);
+        return;
+    }
+
+    file_system_manager->write_file(node, buf, size, off);
+    
+    fuse_reply_write(req, size);
 
 /**
  * This function is called when the contents of a directory are being read.
@@ -469,6 +501,7 @@ static const struct fuse_lowlevel_ops flouds_operations = {
     .rmdir = flouds_rmdir,
     .open = flouds_open,
     .read = flouds_read,
+    .write = flouds_write,
     .readdir = flouds_readdir,
     .create = flouds_create
 };
