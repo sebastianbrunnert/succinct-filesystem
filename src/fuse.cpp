@@ -122,7 +122,7 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
         return;
     }
 
-    stfbuf.st_atime = inode->access_time;
+    stbuf.st_atime = inode->access_time;
     stbuf.st_mtime = inode->modification_time;
     stbuf.st_ctime = inode->creation_time;
     
@@ -138,21 +138,20 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
  * @param to_set Bitmask indicating which attributes should be changed.
  * @param fi Internal file information.
  */
-static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi) {
-    size_t node = ino - 1;
-    
+static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi) {    
     Flouds* flouds = file_system_manager->get_flouds();
+
+    size_t node = ino - 1;
+    Inode* inode = file_system_manager->get_inode(node);
     
     try {
         // Handle different attribute changes
         if (to_set & FUSE_SET_ATTR_MODE) {
-            file_system_manager->set_mode(node, attr->st_mode);
+            inode->mode = attr->st_mode;
         }
         
-        if (to_set & FUSE_SET_ATTR_SIZE) {
-            if (flouds->is_file(node)) {
-                file_system_manager->set_file_size(node, attr->st_size);
-            }
+        if (to_set & FUSE_SET_ATTR_SIZE && flouds->is_file(node)) {
+            file_system_manager->set_file_size(node, attr->st_size);
         }
         
         if (to_set & FUSE_SET_ATTR_ATIME) {
@@ -169,15 +168,22 @@ static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, in
         stbuf.st_ino = ino;
         
         if (flouds->is_folder(node)) {
-            stbuf.st_mode = S_IFDIR | 0755;
+            stbuf.st_mode = S_IFDIR | inode->mode;
             stbuf.st_nlink = 2;
+            stbuf.st_size = block_device->get_block_size();
         } else if (flouds->is_file(node)) {
-            stbuf.st_mode = S_IFREG | 0644;
+            stbuf.st_mode = S_IFREG | inode->mode;
             stbuf.st_nlink = 1;
-            stbuf.st_size = file_system_manager->get_file_size(node);
+            stbuf.st_size = inode->size;
         }
         
+        stbuf.st_atime = inode->access_time;
+        stbuf.st_mtime = inode->modification_time;
+        stbuf.st_ctime = inode->creation_time;
+        
         fuse_reply_attr(req, &stbuf, 1.0);
+
+        file_system_manager->save();
     } catch (...) {
         fuse_reply_err(req, EIO);
     }
@@ -329,6 +335,8 @@ static void flouds_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mo
         entry.attr.st_nlink = 2;
 
         fuse_reply_entry(req, &entry);
+
+        file_system_manager->save();
     } catch (...) {
         fuse_reply_err(req, EIO);
     }
@@ -361,6 +369,8 @@ static void flouds_create(fuse_req_t req, fuse_ino_t parent, const char *name, m
         entry.attr.st_size = 0;
         
         fuse_reply_create(req, &entry, fi);
+
+        file_system_manager->save();
     } catch (...) {
         fuse_reply_err(req, EIO);
     }
@@ -390,9 +400,9 @@ static void flouds_unlink(fuse_req_t req, fuse_ino_t parent, const char *name) {
             }
             
             try {
-                // Remove the file
                 file_system_manager->remove_node(child_node);
                 fuse_reply_err(req, 0);
+                file_system_manager->save();
             } catch (...) {
                 fuse_reply_err(req, EIO);
             }
@@ -437,6 +447,7 @@ static void flouds_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name) {
                 // Remove the directory
                 file_system_manager->remove_node(child_node);
                 fuse_reply_err(req, 0);
+                file_system_manager->save();
             } catch (...) {
                 fuse_reply_err(req, EIO);
             }
