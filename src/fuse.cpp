@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-// We use FUSE 3.18, which is the latest stable release as of February 2026.
+// We use FUSE 3.17, which is the latest stable release as of February 2026.
 #define FUSE_USE_VERSION FUSE_MAKE_VERSION(3, 17)
 
 #include <fuse3/fuse_lowlevel.h>
@@ -103,24 +103,28 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
     struct stat stbuf;
     memset(&stbuf, 0, sizeof(stbuf));
     
-    // Convert FUSE inode to FLOUDS inode
-    size_t node = ino - 1;
-    
     Flouds* flouds = file_system_manager->get_flouds();
-    
     stbuf.st_ino = ino;
+
+    size_t node = ino - 1;
+    Inode* inode = file_system_manager->get_inode(node);
     
     if (flouds->is_folder(node)) {
-        stbuf.st_mode = S_IFDIR | 0755;
+        stbuf.st_mode = S_IFDIR | inode->mode;
         stbuf.st_nlink = 2;
+        stbuf.st_size = block_device->get_block_size();
     } else if (flouds->is_file(node)) {
-        stbuf.st_mode = S_IFREG | 0644;
+        stbuf.st_mode = S_IFREG | inode->mode;
         stbuf.st_nlink = 1;
-        stbuf.st_size = file_system_manager->get_file_size(node);
+        stbuf.st_size = inode->size;
     } else {
         fuse_reply_err(req, ENOENT);
         return;
     }
+
+    stfbuf.st_atime = inode->access_time;
+    stbuf.st_mtime = inode->modification_time;
+    stbuf.st_ctime = inode->creation_time;
     
     fuse_reply_attr(req, &stbuf, 1.0);
 }

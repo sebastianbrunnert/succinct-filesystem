@@ -15,21 +15,24 @@ FileSystemManager::FileSystemManager()
 }
 
 FileSystemManager::~FileSystemManager() {
-    if (flouds) delete flouds;
-    if (allocation_manager) delete allocation_manager;
-    if (block_device) delete block_device;
+    delete flouds;
+    delete allocation_manager;
+    delete block_device;
 }
 
 void FileSystemManager::mount(std::string path) {
     this->block_device = new BlockDevice(path);
     this->allocation_manager = create_allocation_manager<BestFitAllocationStrategy>(block_device);
     this->flouds = create_flouds();
+    this->inode_manager = create_inode_manager<ArrayInodeManagerStrategy>(allocation_manager);
 
     char* buffer = new char[block_device->get_block_size()];
     block_device->read_block(0, buffer);
     
     // Check magic string safely
     if (std::memcmp(buffer, "FLOUDS", 6) != 0) {
+        this->inode_manager->insert_inode(0); // Insert root inode
+
         // Initialize new filesystem
         std::memset(&header, 0, sizeof(FloudsHeader));
         std::memcpy(header.magic, "FLOUDS", 6);
@@ -38,6 +41,8 @@ void FileSystemManager::mount(std::string path) {
         header.allocation_manager_handle = 0;
         header.flouds_handle = 0;
         header.flouds_size = 0;
+        header.inode_manager_handle = 0;
+        header.inode_manager_size = 0;
         
         delete[] buffer;
         this->save();
@@ -59,6 +64,13 @@ void FileSystemManager::mount(std::string path) {
         offset = 0;
         flouds->deserialize(flouds_buffer, &offset);
         delete[] flouds_buffer;
+
+        // Load inode manager
+        char* inode_manager_buffer = new char[header.inode_manager_size];
+        allocation_manager->read(header.inode_manager_handle, inode_manager_buffer, header.inode_manager_size, 0);
+        offset = 0;
+        inode_manager->deserialize(inode_manager_buffer, &offset);
+        delete[] inode_manager_buffer;
     }
 }
 
@@ -77,7 +89,16 @@ void FileSystemManager::save() {
     allocation_manager->write(flouds_handle, flouds_buffer, flouds_size, 0);
     delete[] flouds_buffer;
 
-    // Write allocation manager data    
+    // Write inode manager data
+    size_t inode_manager_size = inode_manager->get_serialized_size();
+    size_t inode_manager_handle = (header.inode_manager_handle == 0) ? allocation_manager->allocate(inode_manager_size) : allocation_manager->resize(header.inode_manager_handle, header.inode_manager_size, inode_manager_size);
+    char* inode_manager_buffer = new char[inode_manager_size];
+    offset = 0;
+    inode_manager->serialize(inode_manager_buffer, &offset);
+    allocation_manager->write(inode_manager_handle, inode_manager_buffer, inode_manager_size, 0);
+    delete[] inode_manager_buffer;
+
+    // Write allocation manager data
     size_t allocation_manager_size = allocation_manager->get_serialized_size();
     size_t allocation_manager_handle = (header.allocation_manager_handle == 0) ? allocation_manager->allocate(allocation_manager_size) : allocation_manager->resize(header.allocation_manager_handle, header.allocation_manager_size, allocation_manager_size);
     // As the allocation manager has no manage itself too, it might change its own size when allocation new space for itself, so we need to check if the size changed after serialization and if so, serialize again until the size stabilizes.
@@ -98,66 +119,40 @@ void FileSystemManager::save() {
     header.flouds_size = flouds_size;
     header.allocation_manager_handle = allocation_manager_handle;
     header.allocation_manager_size = allocation_manager_size;
+    header.inode_manager_handle = inode_manager_handle;
+    header.inode_manager_size = inode_manager_size;
     block_device->write_block(0, (char*) &header);
 }
 
 size_t FileSystemManager::add_node(size_t parent_inode, std::string name, bool is_folder, uint32_t mode) {
-    return flouds->insert(parent_inode, name, is_folder);
+    size_t inode_number = flouds->insert(parent_inode, name, is_folder);
+    Inode* inode = inode_manager->insert_inode(inode_number);
+    inode->mode = mode;
+    return inode_number;
 }
 
 void FileSystemManager::remove_node(size_t inode) {
     flouds->remove(inode);
+    inode_manager->remove_inode(inode);
 }
 
 void FileSystemManager::read_file(size_t inode, char* buffer, size_t size, size_t offset) {
-    
+    Inode* node = inode_manager->get_inode(inode);
+    allocation_manager->read(node->allocation_handle, buffer, size, offset);
 }
 
 void FileSystemManager::write_file(size_t inode, const char* buffer, size_t size, size_t offset) {
-    // TODO: Implement
-}
-
-size_t FileSystemManager::get_file_size(size_t inode) {
-    // TODO: Implement
-    return 0;
+    Inode* node = inode_manager->get_inode(inode);
+    allocation_manager->write(node->allocation_handle, buffer, size, offset);
+    node->modification_time = std::time(nullptr);
 }
 
 void FileSystemManager::set_file_size(size_t inode, size_t size) {
-    // TODO: Implement
+    Inode* node = inode_manager->get_inode(inode);
+    allocation_manager->resize(node->allocation_handle, node->size, size);
+    node->size = size;
 }
 
-time_t FileSystemManager::get_modification_time(size_t inode) {
-    // TODO: Implement
-    return 0;
-}
-
-time_t FileSystemManager::get_access_time(size_t inode) {
-    // TODO: Implement
-    return 0;
-}
-
-time_t FileSystemManager::get_creation_time(size_t inode) {
-    // TODO: Implement
-    return 0;
-}
-
-void FileSystemManager::set_modification_time(size_t inode, time_t time) {
-    // TODO: Implement
-}
-
-void FileSystemManager::set_access_time(size_t inode, time_t time) {
-    // TODO: Implement
-}
-
-void FileSystemManager::set_creation_time(size_t inode, time_t time) {
-    // TODO: Implement
-}
-
-uint32_t FileSystemManager::get_mode(size_t inode) {
-    // TODO: Implement
-    return 0;
-}
-
-void FileSystemManager::set_mode(size_t inode, uint32_t mode) {
-    // TODO: Implement
+Inode* FileSystemManager::get_inode(size_t inode) {
+    return inode_manager->get_inode(inode);
 }

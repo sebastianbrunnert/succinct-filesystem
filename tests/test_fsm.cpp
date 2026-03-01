@@ -55,8 +55,7 @@ TEST(FileSystemManagerTest, AddNodeRemoveNode) {
     std::remove("test_fs.img");
 }
 
-/*
-TEST(FileSystemManagerTest, SetFileSizeGetFileSize) {
+TEST(FileSystemManagerTest, Metadata) {
     FileSystemManager* fsm = new FileSystemManager();
     fsm->mount("test_fs.img");
     fsm->add_node(0, "test_file.txt", false, 0644);
@@ -64,9 +63,8 @@ TEST(FileSystemManagerTest, SetFileSizeGetFileSize) {
     size_t node_id = flouds->child(0, 0);
 
     fsm->set_file_size(node_id, 1024);
-    EXPECT_EQ(fsm->get_file_size(node_id), 1024);
+    EXPECT_EQ(fsm->get_inode(node_id)->size, 1024);
 
     delete fsm;
     std::remove("test_fs.img");
 }
-*/

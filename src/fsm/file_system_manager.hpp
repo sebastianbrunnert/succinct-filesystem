@@ -8,8 +8,9 @@
 #pragma once
 
 #include "../block_device/block_device.hpp"
-#include "allocation/allocation_manager.hpp"
 #include "../flouds/flouds.hpp"
+#include "allocation/allocation_manager.hpp"
+#include "inode/inode.hpp"
 
 /**
  * This structure defines the first block of the filesystem, which contains a magic string to identify the filesystem and allocation handles for all relevant components.
@@ -23,6 +24,9 @@ struct FloudsHeader {
 
     size_t flouds_handle;
     size_t flouds_size;
+
+    size_t inode_manager_handle;
+    size_t inode_manager_size;
 };
 
 /**
@@ -35,6 +39,7 @@ private:
     Flouds* flouds;
     BlockDevice* block_device;
     AllocationManager* allocation_manager;
+    InodeManager* inode_manager;
 
 public:
 
@@ -91,17 +96,25 @@ public:
      */
     virtual void remove_node(size_t inode);
 
+    /**
+     * Reads data from a file represented by the inode number.
+     * 
+     * @param inode The inode number of the file to read from. Must be a valid inode representing a file.
+     * @param buffer The buffer to write the data into. Must be at least size bytes.
+     * @param size The number of bytes to read.
+     * @param offset The offset within the file to start reading from.
+     */
     virtual void read_file(size_t inode, char* buffer, size_t size, size_t offset);
 
-    virtual void write_file(size_t inode, const char* buffer, size_t size, size_t offset);
-
     /**
-     * Gets the size of the file represented by the inode.
+     * Writes data to a file represented by the inode number.
      * 
-     * @param inode The inode number of the file. Must be a valid inode.
-     * @return The size of the file in bytes.
+     * @param inode The inode number of the file to write to. Must be a valid inode representing a file and the file must be large enough.
+     * @param buffer The buffer containing the data to write. Must be at least size bytes.
+     * @param size The number of bytes to write.
+     * @param offset The offset within the file to start writing to.
      */
-    virtual size_t get_file_size(size_t inode);
+    virtual void write_file(size_t inode, const char* buffer, size_t size, size_t offset);
 
     /**
      * Sets the size of the file represented by the inode. It allocates blocks as needed.
@@ -111,14 +124,11 @@ public:
      */
     virtual void set_file_size(size_t inode, size_t size);
 
-    virtual time_t get_modification_time(size_t inode);
-    virtual time_t get_access_time(size_t inode);
-    virtual time_t get_creation_time(size_t inode);
-    virtual void set_modification_time(size_t inode, time_t time);
-    virtual void set_access_time(size_t inode, time_t time);
-    virtual void set_creation_time(size_t inode, time_t time);
-
-    virtual uint32_t get_mode(size_t inode);
-    virtual void set_mode(size_t inode, uint32_t mode);
-
+    /**
+     * Gets the inode structure for the given inode number.
+     * 
+     * @param inode The inode number to get the inode structure for. Must be a valid inode.
+     * @return A pointer to the inode structure.
+     */
+    virtual Inode* get_inode(size_t inode);
 };

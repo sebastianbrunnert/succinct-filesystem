@@ -26,6 +26,7 @@ add_executable(succinct_filesystem
     flouds/flouds.cpp
     block_device/block_device.cpp
     fsm/allocation/best_fit_allocation.cpp
+    fsm/inode/array_inode.cpp
     fsm/file_system_manager.cpp
     ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/hybridBV.c
     ${CMAKE_SOURCE_DIR}/external/adaptive_dynamic_bitvector/hybridId.c
