@@ -143,6 +143,13 @@ void FileSystemManager::read_file(size_t inode, char* buffer, size_t size, size_
 
 void FileSystemManager::write_file(size_t inode, const char* buffer, size_t size, size_t offset) {
     Inode* node = inode_manager->get_inode(inode);
+
+    // If the file is not large enough to write at the given offset, we need to resize it first.
+    if (offset + size > node->size) {
+        node->allocation_handle = allocation_manager->resize(node->allocation_handle, node->size, offset + size);
+        node->size = offset + size;
+    }
+
     allocation_manager->write(node->allocation_handle, buffer, size, offset);
     node->modification_time = std::time(nullptr);
 }

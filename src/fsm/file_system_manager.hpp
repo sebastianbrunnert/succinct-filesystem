@@ -109,7 +109,7 @@ public:
     /**
      * Writes data to a file represented by the inode number.
      * 
-     * @param inode The inode number of the file to write to. Must be a valid inode representing a file and the file must be large enough.
+     * @param inode The inode number of the file to write to. Must be a valid inode representing a file.
      * @param buffer The buffer containing the data to write. Must be at least size bytes.
      * @param size The number of bytes to write.
      * @param offset The offset within the file to start writing to.
