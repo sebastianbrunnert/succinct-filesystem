@@ -150,7 +150,7 @@ static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, in
         }
         
         if (to_set & FUSE_SET_ATTR_SIZE && flouds->is_file(node)) {
-            inode->size = attr->st_size;
+            file_system_manager->set_file_size(node, attr->st_size);
         }
         
         if (to_set & FUSE_SET_ATTR_ATIME) {
@@ -225,6 +225,19 @@ static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
         return;
     }
 
+    Inode* inode = file_system_manager->get_inode(node);
+    
+    // Don't read beyond file size
+    if (off >= inode->size) {
+        fuse_reply_buf(req, NULL, 0);
+        return;
+    }
+    
+    // Adjust size if reading beyond end of file
+    if (off + size > inode->size) {
+        size = inode->size - off;
+    }
+
     char* buffer = new char[size];
     file_system_manager->read_file(node, buffer, size, off);
     
@@ -251,9 +264,14 @@ static void flouds_write(fuse_req_t req, fuse_ino_t ino, const char *buf, size_t
         return;
     }
 
-    file_system_manager->write_file(node, buf, size, off);
-    
-    fuse_reply_write(req, size);
+    try {
+        Inode* inode = file_system_manager->get_inode(node);
+        file_system_manager->write_file(node, buf, size, off);
+        fuse_reply_write(req, size);
+        file_system_manager->save();
+    } catch (...) {
+        fuse_reply_err(req, EIO);
+    }
 }
 
 /**

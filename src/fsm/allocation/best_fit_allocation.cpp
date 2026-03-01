@@ -75,6 +75,11 @@ public:
     }
 
     size_t resize(size_t handle, size_t old_size, size_t new_size) override {
+        // If the file is empty or has an invalid handle, allocate new space
+        if (old_size == 0 || handle == 0) {
+            return allocate(new_size);
+        }
+        
         // Check if the new size can fit in the old space
         size_t old_num_blocks = 1 + (old_size - 1) / block_device->get_block_size();
         size_t new_num_blocks = 1 + (new_size - 1) / block_device->get_block_size();
