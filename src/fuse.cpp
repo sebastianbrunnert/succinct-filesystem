@@ -80,8 +80,8 @@ static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
                 entry.attr.st_size = file_system_manager->get_inode(child_node)->size;
             }
             
-            entry.attr_timeout = 1.0;
-            entry.entry_timeout = 1.0;
+            entry.attr_timeout = 0.0;
+            entry.entry_timeout = 0.0;
             
             fuse_reply_entry(req, &entry);
             return;

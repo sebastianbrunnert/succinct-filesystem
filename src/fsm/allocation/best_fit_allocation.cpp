@@ -86,7 +86,21 @@ public:
         if (new_num_blocks <= old_num_blocks) {
             return handle;
         } else {
-            return allocate(new_size);
+            // Need to allocate new space - copy data and free old space
+            size_t new_handle = allocate(new_size);
+            
+            // Copy existing data to new location
+            if (old_size > 0) {
+                char* temp_buffer = new char[old_size];
+                read(handle, temp_buffer, old_size, 0);
+                write(new_handle, temp_buffer, old_size, 0);
+                delete[] temp_buffer;
+            }
+            
+            // Free the old allocation
+            free(handle);
+            
+            return new_handle;
         }
     }
 

@@ -131,9 +131,14 @@ size_t FileSystemManager::add_node(size_t parent_inode, std::string name, bool i
     return inode_number;
 }
 
-void FileSystemManager::remove_node(size_t inode) {
-    flouds->remove(inode);
-    inode_manager->remove_inode(inode);
+void FileSystemManager::remove_node(size_t inode_number) {
+    Inode* inode = inode_manager->get_inode(inode_number);
+    if (inode->allocation_handle != 0) {
+        allocation_manager->free(inode->allocation_handle);
+    }
+    
+    flouds->remove(inode_number);
+    inode_manager->remove_inode(inode_number);
 }
 
 void FileSystemManager::read_file(size_t inode, char* buffer, size_t size, size_t offset) {
