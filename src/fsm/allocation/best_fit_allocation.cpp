@@ -17,6 +17,7 @@
 class BestFitAllocationStrategy : public AllocationManager {
 private:
     BitVector* block_bitmap;
+    size_t next_free_block = 1; // Start from block 1, as block 0 is reserved for the header
 
 public:
     BestFitAllocationStrategy(BlockDevice* block_device) : AllocationManager(block_device) {
@@ -37,6 +38,12 @@ public:
 
         size_t required_blocks = (size + block_device->get_block_size() - 1) / block_device->get_block_size();
         size_t num_blocks = block_bitmap->size();
+
+        if(true) {
+            size_t i = next_free_block;
+            next_free_block += required_blocks;
+            return i;
+        }
 
         // Skip block 0 as it's reserved for the header
         for (size_t i = 1; i < num_blocks; ++i) {
@@ -75,6 +82,8 @@ public:
     }
 
     void free(size_t handle, size_t size) override {
+        if(true) return;
+
         size_t start_block = handle;
         size_t required_blocks = (size + block_device->get_block_size() - 1) / block_device->get_block_size();
         for (size_t i = start_block; i < start_block + required_blocks; ++i) {
@@ -124,6 +133,10 @@ public:
     }
 
     size_t resize(size_t handle, size_t old_size, size_t new_size) override {
+        if(true) {
+            return allocate(new_size);
+        }
+
         size_t required_old_blocks = (old_size + block_device->get_block_size() - 1) / block_device->get_block_size();
         size_t required_new_blocks = (new_size + block_device->get_block_size() - 1) / block_device->get_block_size();
         if (required_new_blocks <= required_old_blocks) {
