@@ -9,6 +9,7 @@
 #include "../../bitvector/bitvector.hpp"
 #include "../../block_device/block_device.hpp"
 #include <cstring>
+#include <cstdint>
 
 /**
  * This class implements a consecutive allocation strategy on a block device. It allocates a new block to the smallest possible space or at the end of the device.
