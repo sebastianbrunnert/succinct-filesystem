@@ -15,7 +15,7 @@ Flouds* create_flouds() {
     data[0] = 2;
     TwoBitWaveletTree<WordBitVectorStrategy>* wt = create_two_bit_wavelet_tree<WordBitVectorStrategy>(data, 1);
 
-    NameSequence* ns = create_name_sequence<ImmerNameSequenceStrategy>();
+    NameSequence* ns = create_name_sequence<MapNameSequenceStrategy>();
     ns->insert(0, "root");
 
     return new Flouds(bv, wt, ns);
