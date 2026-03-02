@@ -179,10 +179,10 @@ static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, in
         stbuf.st_atime = inode->access_time;
         stbuf.st_mtime = inode->modification_time;
         stbuf.st_ctime = inode->creation_time;
-        
-        fuse_reply_attr(req, &stbuf, 1.0);
 
         file_system_manager->save();
+
+        fuse_reply_attr(req, &stbuf, 1.0);
     } catch (...) {
         fuse_reply_err(req, EIO);
     }
@@ -268,8 +268,8 @@ static void flouds_write(fuse_req_t req, fuse_ino_t ino, const char *buf, size_t
     try {
         Inode* inode = file_system_manager->get_inode(node);
         file_system_manager->write_file(node, buf, size, off);
-        fuse_reply_write(req, size);
         file_system_manager->save();
+        fuse_reply_write(req, size);
     } catch (...) {
         fuse_reply_err(req, EIO);
     }
@@ -384,9 +384,9 @@ static void flouds_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mo
         entry.attr.st_mode = S_IFDIR | mode;
         entry.attr.st_nlink = 2;
 
-        fuse_reply_entry(req, &entry);
-
         file_system_manager->save();
+
+        fuse_reply_entry(req, &entry);
     } catch (...) {
         fuse_reply_err(req, EIO);
     }
@@ -418,9 +418,9 @@ static void flouds_create(fuse_req_t req, fuse_ino_t parent, const char *name, m
         entry.attr.st_nlink = 1;
         entry.attr.st_size = 0;
         
-        fuse_reply_create(req, &entry, fi);
-
         file_system_manager->save();
+
+        fuse_reply_create(req, &entry, fi);
     } catch (...) {
         fuse_reply_err(req, EIO);
     }
@@ -451,8 +451,8 @@ static void flouds_unlink(fuse_req_t req, fuse_ino_t parent, const char *name) {
             
             try {
                 file_system_manager->remove_node(child_node);
-                fuse_reply_err(req, 0);
                 file_system_manager->save();
+                fuse_reply_err(req, 0);
             } catch (...) {
                 fuse_reply_err(req, EIO);
             }
@@ -496,8 +496,8 @@ static void flouds_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name) {
             try {
                 // Remove the directory
                 file_system_manager->remove_node(child_node);
-                fuse_reply_err(req, 0);
                 file_system_manager->save();
+                fuse_reply_err(req, 0);
             } catch (...) {
                 fuse_reply_err(req, EIO);
             }
