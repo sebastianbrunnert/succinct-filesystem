@@ -130,7 +130,21 @@ public:
             return handle;
         }
 
-        // TODO: optimize by checking if can be expanded in place
+        // Check if the blocks after the current allocation are free and can be used for resizing
+        bool can_extend = true;
+        for (size_t i = handle + required_old_blocks; i < handle + required_new_blocks; ++i) {
+            if (block_bitmap->access(i)) {
+                can_extend = false;
+                break;
+            }
+        }
+        if (can_extend) {
+            // Extend the allocation in place
+            for (size_t i = handle + required_old_blocks; i < handle + required_new_blocks; ++i) {
+                block_bitmap->set(i, true);
+            }
+            return handle;
+        }
 
         size_t new_handle = allocate(new_size);
         char* buffer = new char[old_size];
