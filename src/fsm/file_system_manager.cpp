@@ -82,6 +82,7 @@ void FileSystemManager::unmount() {
 void FileSystemManager::save() {
     // Write FLOUDS data
     size_t flouds_size = flouds->get_serialized_size();
+    std::cout << "Saving FLOUDS with size " << flouds_size << " bytes" << std::endl;
     size_t flouds_handle = (header.flouds_handle == 0) ? allocation_manager->allocate(flouds_size) : allocation_manager->resize(header.flouds_handle, header.flouds_size, flouds_size);
     char* flouds_buffer = new char[flouds_size];
     size_t offset = 0;
@@ -91,6 +92,7 @@ void FileSystemManager::save() {
 
     // Write inode manager data
     size_t inode_manager_size = inode_manager->get_serialized_size();
+    std::cout << "Saving inode manager with size " << inode_manager_size << " bytes" << std::endl;
     size_t inode_manager_handle = (header.inode_manager_handle == 0) ? allocation_manager->allocate(inode_manager_size) : allocation_manager->resize(header.inode_manager_handle, header.inode_manager_size, inode_manager_size);
     char* inode_manager_buffer = new char[inode_manager_size];
     offset = 0;
@@ -103,10 +105,12 @@ void FileSystemManager::save() {
     size_t allocation_manager_handle = (header.allocation_manager_handle == 0) ? allocation_manager->allocate(allocation_manager_size) : allocation_manager->resize(header.allocation_manager_handle, header.allocation_manager_size, allocation_manager_size);
     // As the allocation manager has no manage itself too, it might change its own size when allocation new space for itself, so we need to check if the size changed after serialization and if so, serialize again until the size stabilizes.
     size_t allocation_manager_new_size = allocation_manager->get_serialized_size();
+    std::cout << "Saving allocation manager with size " << allocation_manager_new_size << " bytes" << std::endl;
     while (allocation_manager_size != allocation_manager_new_size) {
         allocation_manager_size = allocation_manager_new_size;
         allocation_manager_handle = allocation_manager->resize(allocation_manager_handle, allocation_manager_size, allocation_manager_new_size);
         allocation_manager_new_size = allocation_manager->get_serialized_size();
+        std::cout << "Allocation manager size changed to " << allocation_manager_new_size << " bytes, resizing..." << std::endl;
     }
     char* allocation_manager_buffer = new char[allocation_manager_size];
     offset = 0;
@@ -151,7 +155,7 @@ void FileSystemManager::write_file(size_t inode, const char* buffer, size_t size
 
     // If the file is not large enough to write at the given offset, we need to resize it first.
     if (offset + size > node->size) {
-        node->allocation_handle = allocation_manager->resize(node->allocation_handle, node->size, offset + size);
+        node->allocation_handle = (node->allocation_handle == 0) ? allocation_manager->allocate(offset + size) : allocation_manager->resize(node->allocation_handle, node->size, offset + size);
         node->size = offset + size;
     }
 
@@ -161,7 +165,8 @@ void FileSystemManager::write_file(size_t inode, const char* buffer, size_t size
 
 void FileSystemManager::set_file_size(size_t inode, size_t size) {
     Inode* node = inode_manager->get_inode(inode);
-    node->allocation_handle = allocation_manager->resize(node->allocation_handle, node->size, size);
+    std::cout << "Resizing file with inode " << inode << " from size " << node->size << " to size " << size << std::endl;
+    node->allocation_handle = (node->allocation_handle == 0) ? allocation_manager->allocate(size) : allocation_manager->resize(node->allocation_handle, node->size, size);
     node->size = size;
 }
 
