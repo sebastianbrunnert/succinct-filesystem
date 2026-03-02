@@ -24,7 +24,11 @@ public:
     
     void set(size_t position, bool value) override {
         if (position >= num_bits) throw std::out_of_range("position out of range");
-        words[position / 64] |= (1ull << (position % 64));
+        if (value) {
+            words[position / 64] |= (1ull << (position % 64));
+        } else {
+            words[position / 64] &= ~(1ull << (position % 64));
+        }
     }
 
     bool access(size_t position) const override {
@@ -150,6 +154,8 @@ public:
         
         if (value) {
             words[word_index] |= (1ull << bit_index);
+        } else {
+            words[word_index] &= ~(1ull << bit_index);
         }
     }
 

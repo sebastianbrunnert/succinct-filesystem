@@ -126,6 +126,8 @@ void FileSystemManager::save() {
     header.inode_manager_handle = inode_manager_handle;
     header.inode_manager_size = inode_manager_size;
     block_device->write_block(0, (char*) &header);
+
+    std::cout << "Save complete" << std::endl;
 }
 
 size_t FileSystemManager::add_node(size_t parent_inode, std::string name, bool is_folder, uint32_t mode) {
