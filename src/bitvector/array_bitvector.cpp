@@ -24,12 +24,10 @@ public:
     ArrayBitVectorStrategy(size_t n) : bits(n, false) {}
 
     void set(size_t position, bool value) override {
-        if (position >= bits.size()) throw std::out_of_range("position out of range");
         bits[position] = value;
     }
 
     bool access(size_t position) const override {
-        if (position >= bits.size()) throw std::out_of_range("position out of range");
         return bits[position];
     }
 
@@ -38,7 +36,6 @@ public:
     }
 
     size_t rank1(size_t position) const override {
-        if (position >= bits.size()) throw std::out_of_range("position out of range");
         size_t count = 0;
         for (size_t i = 0; i <= position; i++) {
             if (bits[i]) count++;
@@ -51,7 +48,6 @@ public:
     }
 
     size_t select1(size_t n) const override {
-        if (n == 0) throw std::out_of_range("n must be greater than zero");
         size_t count = 0;
         for (size_t i = 0; i < bits.size(); i++) {
             if (bits[i]) ++count;
@@ -61,7 +57,6 @@ public:
     }
 
     size_t select0(size_t n) const override {
-        if (n == 0) throw std::out_of_range("n must be greater than zero");
         size_t count = 0;
         for (size_t i = 0; i < bits.size(); i++) {
             if (!bits[i]) ++count;
@@ -71,12 +66,10 @@ public:
     }
 
     void insert(size_t position, bool value) override {
-        if (position > bits.size()) throw std::out_of_range("position out of range");
         bits.insert(bits.begin() + position, value);
     }
 
     void remove(size_t position) override {
-        if (position >= bits.size()) throw std::out_of_range("position out of range");
         bits.erase(bits.begin() + position);
     }
 

@@ -23,12 +23,10 @@ public:
     ArrayNameSequenceStrategy() : names() {}
 
     void set(size_t position, const std::string& name) override {
-        if (position >= names.size()) throw std::out_of_range("position out of range");
         names[position] = name;
     }
 
     std::string access(size_t position) const override {
-        if (position >= names.size()) throw std::out_of_range("position out of range");
         return names[position];
     }
 
@@ -37,7 +35,6 @@ public:
     }
 
     void insert(size_t position, const std::string& name) override {
-        if (position > names.size()) throw std::out_of_range("position out of range");
         names.insert(names.begin() + position, name);
     }
 

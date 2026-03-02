@@ -22,12 +22,10 @@ public:
     ImmerNameSequenceStrategy() : names() {}
 
     void set(size_t position, const std::string& name) override {
-        if (position >= names.size()) throw std::out_of_range("position out of range");
         names = names.set(position, name);
     }
 
     std::string access(size_t position) const override {
-        if (position >= names.size()) throw std::out_of_range("position out of range");
         return names[position];
     }
 
@@ -36,12 +34,10 @@ public:
     }
 
     void insert(size_t position, const std::string& name) override {
-        if (position > names.size()) throw std::out_of_range("position out of range");
         names = names.insert(position, name);
     }
 
     void remove(size_t position) override {
-        if (position >= names.size()) throw std::out_of_range("position out of range");
         names = names.erase(position);
     }
 

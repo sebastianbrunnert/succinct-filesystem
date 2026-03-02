@@ -23,7 +23,6 @@ public:
     WordBitVectorStrategy(size_t n) : num_bits(n), words((n + sizeof(size_t) * 8 - 1) / (sizeof(size_t) * 8), 0) {};
     
     void set(size_t position, bool value) override {
-        if (position >= num_bits) throw std::out_of_range("position out of range");
         if (value) {
             words[position / 64] |= (1ull << (position % 64));
         } else {
@@ -32,7 +31,6 @@ public:
     }
 
     bool access(size_t position) const override {
-        if (position >= num_bits) throw std::out_of_range("position out of range");
         return (words[position / 64] >> (position % 64)) & 1;
     }
 
@@ -41,8 +39,6 @@ public:
     }
 
     size_t rank1(size_t position) const override {
-        if (position >= num_bits) throw std::out_of_range("position out of range");
-
         size_t count = 0;
         size_t full_words = (position + 1) / 64;
         size_t remaining_bits = (position + 1) % 64;
@@ -63,8 +59,6 @@ public:
     }
 
     size_t select0(size_t n) const override {
-        if (n == 0) throw std::out_of_range("n must be greater than zero");
-
         size_t count = 0;
         for(size_t i = 0; i < words.size(); i++) {
             size_t bits_in_word = 64;
@@ -98,8 +92,6 @@ public:
     }
 
     size_t select1(size_t n) const override {
-        if (n == 0) throw std::out_of_range("n must be greater than zero");
-
         size_t count = 0;
         for(size_t i = 0; i < words.size(); i++) {
             size_t bits_in_word = 64;
@@ -133,8 +125,6 @@ public:
     }
 
     void insert(size_t position, bool value) override {
-        if (position > num_bits) throw std::out_of_range("position out of range");
-
         num_bits++;
         if (num_bits % 64 == 1) {
             words.push_back(0);
@@ -160,8 +150,6 @@ public:
     }
 
     void remove(size_t position) override {
-        if (position >= num_bits) throw std::out_of_range("position out of range");
-
         size_t word_index = position / 64;
         size_t bit_index = position % 64;
 

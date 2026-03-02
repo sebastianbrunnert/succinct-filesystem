@@ -27,7 +27,6 @@ public:
     }
 
     void set(size_t position, const std::string& name) override {
-        if (position >= size()) throw std::out_of_range("position out of range");
         remove(position);
         insert(position, name);
     }
@@ -49,7 +48,6 @@ public:
     }
 
     void insert(size_t position, const std::string& name) override {
-        if (position > size()) throw std::out_of_range("position out of range");
         size_t char_pos;
         if (position == 0) {
             char_pos = 0;
@@ -65,7 +63,6 @@ public:
     }
 
     void remove(size_t position) override {
-        if (position >= size()) throw std::out_of_range("position out of range");
         size_t start = boundaries->select1(position + 1);
         size_t end;
         if (position == size() - 1) {

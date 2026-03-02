@@ -50,12 +50,10 @@ public:
     /**
      * Sets the symbol at the specified position to the given value.
      * 
-     * @param position The 0-based position in the wavelet tree to set.
+     * @param position The 0-based position in the wavelet tree to set. Must be less than the size of the wavelet tree.
      * @param symbol The symbol to set at the specified position. Must be in the range [0, 3].
-     * @throws std::out_of_range if the position exceeds the size of the wavelet tree.
      */
     void set(size_t position, uint8_t symbol) {
-        if (position >= size()) throw std::out_of_range("position out of range");
         // TODO: optimize
         remove(position);
         insert(position, symbol);
@@ -64,12 +62,10 @@ public:
     /**
      * Accesses the symbol at the specified position.
      * 
-     * @param position The 0-based position in the wavelet tree to access.
+     * @param position The 0-based position in the wavelet tree to access. Must be less than the size of the wavelet tree.
      * @return The symbol at the specified position.
-     * @throws std::out_of_range if the position exceeds the size of the wavelet tree.
      */
     uint8_t access(size_t position) const {
-        if (position >= size()) throw std::out_of_range("position out of range");
         if (root_bv->access(position)) {
             return right_bv->access(root_bv->rank1(position) - 1) ? 3 : 2;
         } else {
@@ -90,9 +86,8 @@ public:
      * Gets the number of occurrences of the specified symbol in the wavelet tree up to and including the specified position.
      * 
      * @param symbol The symbol for which to count the occurrences. Must be in the range [0, 3].
-     * @param position The position up to which to count the occurrences of the symbol.
+     * @param position The position up to which to count the occurrences of the symbol. Must be less than the size of the wavelet tree.
      * @return The number of the specified symbol in the wavelet tree up to and including the specified position.
-     * @throws std::out_of_range if the position exceeds the size of the wavelet tree.
      */
     size_t rank(uint8_t symbol, size_t position) const {
         if (position >= size()) throw std::out_of_range("position out of range");
@@ -120,12 +115,10 @@ public:
      * Gets the position of the n-th occurrence of the specified symbol in the wavelet tree.
      * 
      * @param symbol The symbol for which to find the n-th occurrence. Must be in the range [0, 3].
-     * @param n The occurrence number of the symbol to find.
+     * @param n The occurrence number of the symbol to find. Must be greater than zero and less than or equal to the total number of occurrences of the symbol in the wavelet tree.
      * @return The position of the n-th occurrence of the specified symbol in the wavelet tree.
-     * @throws std::out_of_range if n is zero or exceeds the number of occurrences of the symbol in the wavelet tree.
      */
     size_t select(uint8_t symbol, size_t n) const {
-        if (n == 0) throw std::out_of_range("n must be greater than zero");
         if(symbol == 0) {
             return root_bv->select0(left_bv->select0(n) + 1);
         } else if (symbol == 1) {
@@ -142,11 +135,8 @@ public:
      * 
      * @param position The 0-based position at which to insert the new symbol.
      * @param symbol The symbol to insert at the specified position. Must be in the range [0, 3].
-     * @throws std::out_of_range if the position exceeds the size of the wavelet tree plus one.
      */
-    void insert(size_t position, uint8_t symbol) {
-        if (position > size()) throw std::out_of_range("position out of range");
-        
+    void insert(size_t position, uint8_t symbol) {        
         // Calculate the position in the child bit vector where the new symbol should be inserted
         size_t child_pos = 0;
         if (position > 0) {
@@ -166,11 +156,8 @@ public:
      * Removes the symbol at the specified position.
      * 
      * @param position The 0-based position of the symbol to remove.
-     * @throws std::out_of_range if the position exceeds the size of the wavelet tree.
      */
-    void remove(size_t position) {
-        if (position >= size()) throw std::out_of_range("position out of range");
-        
+    void remove(size_t position) {        
         bool root_bit = root_bv->access(position);
         size_t child_pos = root_bit ? (root_bv->rank1(position) - 1) : (root_bv->rank0(position) - 1);
         root_bv->remove(position);
@@ -216,7 +203,6 @@ public:
  * @param data The array of symbols to build the wavelet tree from. Each symbol must be in the range [0, 3].
  * @param n The number of symbols in the data array.
  * @return A pointer to a new TwoBitWaveletTree instance built from the given data.
- * @throws std::out_of_range if any symbol in the data array is out of range.
  */
 template <typename BitVectorStrategy>
 TwoBitWaveletTree<BitVectorStrategy>* create_two_bit_wavelet_tree(uint8_t data[], size_t n) {

@@ -26,7 +26,6 @@ TEST_P(NameSequenceTest, InsertAndAccess) {
         EXPECT_EQ(name_sequence->access(i), "name" + std::to_string(i));
     }
     EXPECT_EQ(name_sequence->size(), 10);
-    EXPECT_THROW(name_sequence->access(10), std::out_of_range);
     delete name_sequence;
 }
 

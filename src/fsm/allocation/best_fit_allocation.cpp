@@ -130,6 +130,8 @@ public:
             return handle;
         }
 
+        // TODO: optimize by checking if can be expanded in place
+
         size_t new_handle = allocate(new_size);
         char* buffer = new char[old_size];
         read(handle, buffer, old_size, 0);

@@ -44,12 +44,10 @@ public:
     }
 
     void set(size_t position, bool value) override {
-        if (position >= size()) throw std::out_of_range("position out of range");
         hybridWrite(adaptive, position, 1);
     }
 
     bool access(size_t position) const override {
-        if (position >= size()) throw std::out_of_range("position out of range");
         return hybridAccess(adaptive, position);
     }
 
@@ -58,34 +56,26 @@ public:
     }
 
     size_t rank1(size_t position) const override {
-        if (position >= size()) throw std::out_of_range("position out of range");
         return hybridRank(adaptive, position);
     }
 
     size_t rank0(size_t position) const override {
-        if (position >= size()) throw std::out_of_range("position out of range");
         return hybridRank0(adaptive, position);
     }
 
     size_t select1(size_t n) const override {
-        if (n == 0) throw std::out_of_range("n must be greater than zero");
-        if (hybridOnes(adaptive) < n) throw std::out_of_range("n exceeds number of 1-bits");
         return hybridSelect(adaptive, n);
     }
 
     size_t select0(size_t n) const override {
-        if (n == 0) throw std::out_of_range("n must be greater than zero");
-        if (size() - hybridOnes(adaptive) < n) throw std::out_of_range("n exceeds number of 0-bits");
         return hybridSelect0(adaptive, n);
     }
 
     void insert(size_t position, bool value) override {
-        if (position > size()) throw std::out_of_range("position out of range");
         hybridInsert(adaptive, position, value);
     }
 
     void remove(size_t position) override {
-        if (position >= size()) throw std::out_of_range("position out of range");
         hybridDelete(adaptive, position);
     }
 

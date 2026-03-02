@@ -55,8 +55,6 @@ TEST_P(BitVectorTest, Rank) {
     EXPECT_EQ(bv->rank1(3), 1);
     EXPECT_EQ(bv->rank0(9), 8);
     EXPECT_EQ(bv->rank1(9), 2);
-    EXPECT_THROW(bv->rank0(10), std::out_of_range);
-    EXPECT_THROW(bv->rank1(10), std::out_of_range);
 
     bv = create_bitvector(100);
     for (size_t i = 0; i < 100; i += 2) {
@@ -71,8 +69,6 @@ TEST_P(BitVectorTest, Rank) {
             EXPECT_EQ(bv->rank0(i), (i + 1) / 2);
         }
     }
-    EXPECT_THROW(bv->rank0(100), std::out_of_range);
-    EXPECT_THROW(bv->rank1(100), std::out_of_range);
 }
 
 TEST_P(BitVectorTest, Select) {
@@ -83,10 +79,6 @@ TEST_P(BitVectorTest, Select) {
     EXPECT_EQ(bv->select0(4), 4);
     EXPECT_EQ(bv->select1(1), 3);
     EXPECT_EQ(bv->select1(2), 5);
-    EXPECT_THROW(bv->select0(0), std::out_of_range);
-    EXPECT_THROW(bv->select1(0), std::out_of_range);
-    EXPECT_THROW(bv->select0(9), std::out_of_range);
-    EXPECT_THROW(bv->select1(3), std::out_of_range);
 
     bv = create_bitvector(100);
     for (size_t i = 0; i < 100; i += 2) {
@@ -96,8 +88,6 @@ TEST_P(BitVectorTest, Select) {
     EXPECT_EQ(bv->select0(50), 99);
     EXPECT_EQ(bv->select1(1), 0);
     EXPECT_EQ(bv->select1(50), 98);
-    EXPECT_THROW(bv->select0(51), std::out_of_range);
-    EXPECT_THROW(bv->select1(51), std::out_of_range);
 }
 
 TEST_P(BitVectorTest, Insert) {
@@ -108,7 +98,6 @@ TEST_P(BitVectorTest, Insert) {
     EXPECT_FALSE(bv->access(6));
     bv->insert(11, true);
     EXPECT_EQ(bv->size(), 12);
-    EXPECT_THROW(bv->insert(13, true), std::out_of_range);
 
     bv = create_bitvector(100);
     bv->insert(0, true);
@@ -120,7 +109,6 @@ TEST_P(BitVectorTest, Insert) {
     EXPECT_FALSE(bv->access(65));
     EXPECT_EQ(bv->rank1(101), 2);
     EXPECT_EQ(bv->select1(2), 64);
-    EXPECT_THROW(bv->insert(103, true), std::out_of_range);
 
     bv = create_bitvector(129);
     for(size_t i = 0; i < 129; i++) {
@@ -146,7 +134,6 @@ TEST_P(BitVectorTest, Remove) {
     EXPECT_TRUE(bv->access(3));
     EXPECT_TRUE(bv->access(4));
     EXPECT_FALSE(bv->access(5));
-    EXPECT_THROW(bv->remove(9), std::out_of_range);
 
     bv = create_bitvector(100);
     for (size_t i = 0; i < 100; i += 2) {

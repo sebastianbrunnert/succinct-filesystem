@@ -44,12 +44,10 @@ namespace {
         for(size_t i = 0; i < tree->size(); i++) {
             tree->set(i, (data[i]+1) % 4);
         }
-        EXPECT_THROW(tree->set(tree->size(), 1), std::out_of_range);
 
         for(size_t i = 0; i < tree->size(); i++) {
             EXPECT_EQ(tree->access(i), (data[i]+1) % 4);
         }
-        EXPECT_THROW(tree->access(tree->size()), std::out_of_range);
     }
     
     TEST_F(WaveletTreeTest, Rank) {
@@ -63,10 +61,6 @@ namespace {
             }
             EXPECT_EQ(tree->rank(symbol, i), rank);
         }
-        
-        for(uint8_t symbol = 0; symbol < 4; symbol++) {
-            EXPECT_THROW(tree->rank(symbol, tree->size()), std::out_of_range);
-        }
     }
 
     TEST_F(WaveletTreeTest, Select) {
@@ -78,7 +72,6 @@ namespace {
                     EXPECT_EQ(tree->select(symbol, count), i);
                 }
             }
-            EXPECT_THROW(tree->select(symbol, count + 1), std::out_of_range);
         }
     }
 
@@ -99,8 +92,6 @@ namespace {
                 EXPECT_EQ(tree->access(i), data[i - 2]);
             }
         }
-
-        EXPECT_THROW(tree->insert(tree->size() + 1, 1), std::out_of_range);
     }
 
     TEST_F(WaveletTreeTest, Remove) {
@@ -120,8 +111,6 @@ namespace {
                 EXPECT_EQ(tree->access(i), data[i + 2]);
             }
         }
-
-        EXPECT_THROW(tree->remove(tree->size()), std::out_of_range);
     }
 
     TEST_F(WaveletTreeTest, SerializeDeserialize) {

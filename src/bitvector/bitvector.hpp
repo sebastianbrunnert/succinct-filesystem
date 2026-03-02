@@ -26,18 +26,16 @@ public:
     /**
      * Sets the bit at the specified position to the given value.
      * 
-     * @param position The 0-based position of the bit vector to set.
+     * @param position The 0-based position of the bit vector to set. Must be less than the size of the bit vector.
      * @param value The value to set the bit to.
-     * @throws std::out_of_range if the position exceeds the size of the bit vector.
      */
     virtual void set(size_t position, bool value) = 0;
 
     /**
      * Accesses the value of the bit at the specified position.
      * 
-     * @param position The 0-based position of the bit vector to get.
+     * @param position The 0-based position of the bit vector to get. Must be less than the size of the bit vector.
      * @return The value of the bit at the specified position.
-     * @throws std::out_of_range if the position exceeds the size of the bit vector.
      */
     virtual bool access(size_t position) const = 0;
 
@@ -51,53 +49,47 @@ public:
     /**
      * Gets the number of 0-bits in the bit vector up to and including the specified position.
      * 
-     * @param position The position up to which to count the number of 0-bits.
+     * @param position The position up to which to count the number of 0-bits. Must be less than the size of the bit vector.
      * @return The number of 0-bits in the bit vector up to and including the specified position.
-     * @throws std::out_of_range if the position exceeds the size of the bit vector.
      */
     virtual size_t rank0(size_t position) const = 0;
 
     /**
      * Gets the number of 1-bits in the bit vector up to and including the specified position.
      * 
-     * @param position The position up to which to count the number of 1-bits.
+     * @param position The position up to which to count the number of 1-bits. Must be less than the size of the bit vector.
      * @return The number of 1-bits in the bit vector up to and including the specified position.
-     * @throws std::out_of_range if the position exceeds the size of the bit vector.
      */
     virtual size_t rank1(size_t position) const = 0;
 
     /**
      * Gets the position of the n-th 0-bit in the bit vector.
      * 
-     * @param n
+     * @param n Must be greater than zero and less than or equal to the number of 0-bits in the bit vector.
      * @return The position of the nth 0-bit in the bit vector.
-     * @throws std::out_of_range if n is zero or exceeds the number of 0-bits in the bit vector.
      */
     virtual size_t select0(size_t n) const = 0;
 
     /**
      * Gets the position of the n-th 1-bit in the bit vector.
      * 
-     * @param n
+     * @param n Must be greater than zero and less than or equal to the number of 1-bits in the bit vector.
      * @return The position of the nth 1-bit in the bit vector.
-     * @throws std::out_of_range if n is zero or exceeds the number of 1-bits in the bit vector.
      */    
     virtual size_t select1(size_t n) const = 0;
 
     /**
      * Inserts a bit with the given value at the specified position, shifting all following bits to the right.
      * 
-     * @param position The 0-based position at which to insert the new bit.
+     * @param position The 0-based position at which to insert the new bit. Must be less than or equal to the size of the bit vector.
      * @param value The value of the bit to insert.
-     * @throws std::out_of_range if the position exceeds the size of the bit vector plus one.
      */
     virtual void insert(size_t position, bool value) = 0;
 
     /**
      * Removes the bit at the specified position, shifting all following bits to the left.
      * 
-     * @param position The 0-based position of the bit to remove.
-     * @throws std::out_of_range if the position exceeds the size of the bit vector.
+     * @param position The 0-based position of the bit to remove. Must be less than the size of the bit vector.
      */
     virtual void remove(size_t position) = 0;
 

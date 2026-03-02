@@ -27,18 +27,16 @@ public:
     /**
      * Sets the name at the specified position.
      * 
-     * @param position The 0-based position of the name to set.
+     * @param position The 0-based position of the name to set. Must be less than the size of the name sequence.
      * @param name The name to set at the specified position. Must be non-empty.
-     * @throws std::out_of_range if the position exceeds the size of the name sequence.
      */
     virtual void set(size_t position, const std::string& name) = 0;
 
     /**
      * Gets the name at the specified position.
      * 
-     * @param position The 0-based position of the name to get.
+     * @param position The 0-based position of the name to get. Must be less than the size of the name sequence.
      * @return The name at the specified position.
-     * @throws std::out_of_range if the position exceeds the size of the name sequence.
      */
     virtual std::string access(size_t position) const = 0;
 
@@ -52,17 +50,15 @@ public:
     /**
      * Inserts a name at the specified position.
      * 
-     * @param position The 0-based position at which to insert the new name.
+     * @param position The 0-based position at which to insert the new name. Must be less than or equal to the size of the name sequence.
      * @param name The name to insert at the specified position.
-     * @throws std::out_of_range if the position exceeds the size of the name sequence plus one.
      */ 
     virtual void insert(size_t position, const std::string& name) = 0;
 
     /**
      * Removes the name at the specified position.
      * 
-     * @param position The 0-based position of the name to remove.
-     * @throws std::out_of_range if the position exceeds the size of the name sequence.
+     * @param position The 0-based position of the name to remove. Must be less than the size of the name sequence.
      */    
     virtual void remove(size_t position) = 0;
 

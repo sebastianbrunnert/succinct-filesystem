@@ -21,13 +21,11 @@ public:
     MapNameSequenceStrategy() : names() {}
 
     void set(size_t position, const std::string& name) override {
-        if (position >= names.size()) throw std::out_of_range("position out of range");
         names[position] = name;
     }
 
     std::string access(size_t position) const override {
         auto it = names.find(position);
-        if (it == names.end()) throw std::out_of_range("position out of range");
         return it->second;
     }
 
@@ -36,7 +34,6 @@ public:
     }
 
     void insert(size_t position, const std::string& name) override {
-        if (position > names.size()) throw std::out_of_range("position out of range");
         for (size_t i = names.size(); i > position; i--) {
             auto it = names.find(i - 1);
             if (it != names.end()) {
@@ -49,7 +46,6 @@ public:
     }
 
     void remove(size_t position) override {
-        if (position >= names.size()) throw std::out_of_range("position out of range");
         for (size_t i = position; i < names.size() - 1; i++) {
             auto it = names.find(i + 1);
             if (it != names.end()) {
