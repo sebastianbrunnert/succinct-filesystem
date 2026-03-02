@@ -134,7 +134,7 @@ size_t FileSystemManager::add_node(size_t parent_inode, std::string name, bool i
 void FileSystemManager::remove_node(size_t inode_number) {
     Inode* inode = inode_manager->get_inode(inode_number);
     if (inode->allocation_handle != 0) {
-        allocation_manager->free(inode->allocation_handle);
+        allocation_manager->free(inode->allocation_handle, inode->size);
     }
     
     flouds->remove(inode_number);

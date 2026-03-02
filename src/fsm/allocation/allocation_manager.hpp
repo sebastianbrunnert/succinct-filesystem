@@ -41,8 +41,9 @@ public:
      * Frees the space with the given handle.
      * 
      * @param handle The handle of the space to free.
+     * @param size The size of the space to free in bytes. Must be the correct size.
      */
-    virtual void free(size_t handle) = 0;
+    virtual void free(size_t handle, size_t size) = 0;
 
     /**
      * Reads data from the block device.

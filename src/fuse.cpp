@@ -80,6 +80,7 @@ static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
                 entry.attr.st_size = file_system_manager->get_inode(child_node)->size;
             }
             
+            // TODO: Maybe we can use Timeout it we can stabilize the Inodes due to delta coding
             entry.attr_timeout = 0.0;
             entry.entry_timeout = 0.0;
             

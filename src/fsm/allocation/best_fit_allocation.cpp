@@ -15,22 +15,70 @@
  */
 class BestFitAllocationStrategy : public AllocationManager {
 private:
-    size_t next_block = 1;
+    BitVector* block_bitmap;
 
 public:
-    BestFitAllocationStrategy(BlockDevice* block_device) : AllocationManager(block_device) {}
-
-    ~BestFitAllocationStrategy() override = default;
-
-    size_t allocate(size_t size) override {
-        size_t num_blocks = 1 + (size - 1) / block_device->get_block_size();
-        size_t handle = next_block;
-        next_block += num_blocks;
-        return handle;
+    BestFitAllocationStrategy(BlockDevice* block_device) : AllocationManager(block_device) {
+        block_bitmap = create_bitvector<WordBitVectorStrategy>(0);
+        block_bitmap->insert(0, true);  // Block 0 is reserved for the header
     }
 
-    void free(size_t handle) override {
-        // Do nothing - never reuse space
+    ~BestFitAllocationStrategy() override {
+        delete block_bitmap;
+    }
+
+    size_t allocate(size_t size) override {
+        size_t best_start = SIZE_MAX;
+        size_t best_size = SIZE_MAX;
+
+        size_t current_start = SIZE_MAX;
+        size_t current_size = 0;
+
+        size_t required_blocks = (size + block_device->get_block_size() - 1) / block_device->get_block_size();
+        size_t num_blocks = block_bitmap->size();
+
+        // Skip block 0 as it's reserved for the header
+        for (size_t i = 1; i < num_blocks; ++i) {
+            if (!block_bitmap->access(i)) {
+                if (current_start == SIZE_MAX) {
+                    current_start = i;
+                }
+                current_size++;
+            } else {
+                if (current_size >= required_blocks && current_size < best_size) {
+                    best_start = current_start;
+                    best_size = current_size;
+                }
+                current_start = SIZE_MAX;
+                current_size = 0;
+            }
+        }
+
+        if (current_size >= required_blocks && current_size < best_size) {
+            best_start = current_start;
+        }
+
+        if (best_start == SIZE_MAX) {
+            // Allocate at the end
+            best_start = num_blocks;
+            for (size_t i = best_start; i < best_start + required_blocks; ++i) {
+                block_bitmap->insert(i, true);
+            }
+        } else {
+            for (size_t i = best_start; i < best_start + required_blocks; ++i) {
+                block_bitmap->set(i, true);
+            }
+        }
+
+        return best_start;
+    }
+
+    void free(size_t handle, size_t size) override {
+        size_t start_block = handle;
+        size_t required_blocks = (size + block_device->get_block_size() - 1) / block_device->get_block_size();
+        for (size_t i = start_block; i < start_block + required_blocks; ++i) {
+            block_bitmap->set(i, false);
+        }
     }
 
     void read(size_t handle, char* buffer, size_t size, size_t offset) override {
@@ -75,47 +123,29 @@ public:
     }
 
     size_t resize(size_t handle, size_t old_size, size_t new_size) override {
-        // If the file is empty or has an invalid handle, allocate new space
-        if (old_size == 0 || handle == 0) {
-            return allocate(new_size);
-        }
-        
-        // Check if the new size can fit in the old space
-        size_t old_num_blocks = 1 + (old_size - 1) / block_device->get_block_size();
-        size_t new_num_blocks = 1 + (new_size - 1) / block_device->get_block_size();
-        if (new_num_blocks <= old_num_blocks) {
+        if (new_size <= old_size) {
             return handle;
-        } else {
-            // Need to allocate new space - copy data and free old space
-            size_t new_handle = allocate(new_size);
-            
-            // Copy existing data to new location
-            if (old_size > 0) {
-                char* temp_buffer = new char[old_size];
-                read(handle, temp_buffer, old_size, 0);
-                write(new_handle, temp_buffer, old_size, 0);
-                delete[] temp_buffer;
-            }
-            
-            // Free the old allocation
-            free(handle);
-            
-            return new_handle;
         }
+
+        size_t new_handle = allocate(new_size);
+        char* buffer = new char[old_size];
+        read(handle, buffer, old_size, 0);
+        write(new_handle, buffer, old_size, 0);
+        free(handle, old_size);
+        delete[] buffer;
+        return new_handle;
     }
 
     void serialize(char* buffer, size_t* offset) override {
-        memcpy(buffer + *offset, &next_block, sizeof(size_t));
-        *offset += sizeof(size_t);
+        block_bitmap->serialize(buffer, offset);
     }
 
     void deserialize(const char* buffer, size_t* offset) override {
-        memcpy(&next_block, buffer + *offset, sizeof(size_t));
-        *offset += sizeof(size_t);
+        block_bitmap->deserialize(buffer, offset);
     }
 
     size_t get_serialized_size() override {
-        return sizeof(size_t);
+        return block_bitmap->get_serialized_size();
     }
 };
 

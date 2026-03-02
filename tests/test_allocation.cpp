@@ -29,8 +29,8 @@ TEST_P(AllocationManagerTest, AllocateAndFree) {
     size_t handle1 = allocation_manager->allocate(4096);
     size_t handle2 = allocation_manager->allocate(8192);
     EXPECT_NE(handle1, handle2);
-    allocation_manager->free(handle1);
-    allocation_manager->free(handle2);
+    allocation_manager->free(handle1, 4096);
+    allocation_manager->free(handle2, 8192);
 
     std::remove("test_block_device.img");
 }
@@ -44,7 +44,7 @@ TEST_P(AllocationManagerTest, ReadAndWrite) {
     char buffer[4096];
     allocation_manager->read(handle, buffer, sizeof(buffer), 0);
     EXPECT_STREQ(buffer, data);
-    allocation_manager->free(handle);
+    allocation_manager->free(handle, 4096);
     std::remove("test_block_device.img");
 }
 
@@ -66,7 +66,7 @@ TEST_P(AllocationManagerTest, Resize) {
     allocation_manager->read(new_handle, buffer, sizeof(buffer), 0);
     EXPECT_STREQ(buffer, data);
 
-    allocation_manager->free(new_handle);
+    allocation_manager->free(new_handle, 2048);
     std::remove("test_block_device.img");
 }
 
@@ -92,8 +92,8 @@ TEST_P(AllocationManagerTest, SerializeDeserialize) {
     deserialized_manager->read(handle, read_buffer, sizeof(read_buffer), 0);
     EXPECT_STREQ(read_buffer, data);
 
-    allocation_manager->free(handle);
-    deserialized_manager->free(handle);
+    allocation_manager->free(handle, 4096);
+    deserialized_manager->free(handle, 4096);
     std::remove("test_block_device.img");
 }
 
