@@ -133,7 +133,7 @@ public:
     /**
      * Inserts a symbol at the specified position.
      * 
-     * @param position The 0-based position at which to insert the new symbol.
+     * @param position The 0-based position at which to insert the new symbol. Must be less than or equal to the size of the wavelet tree.
      * @param symbol The symbol to insert at the specified position. Must be in the range [0, 3].
      */
     void insert(size_t position, uint8_t symbol) {        
