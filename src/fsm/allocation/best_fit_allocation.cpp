@@ -124,7 +124,9 @@ public:
     }
 
     size_t resize(size_t handle, size_t old_size, size_t new_size) override {
-        if (new_size <= old_size) {
+        size_t required_old_blocks = (old_size + block_device->get_block_size() - 1) / block_device->get_block_size();
+        size_t required_new_blocks = (new_size + block_device->get_block_size() - 1) / block_device->get_block_size();
+        if (required_new_blocks <= required_old_blocks) {
             return handle;
         }
 
