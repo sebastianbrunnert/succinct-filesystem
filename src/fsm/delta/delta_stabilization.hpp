@@ -6,51 +6,34 @@
  */
 
 #include <cstddef>
-#include <vector>
 
 class DeltaStabilization {
 private:
-    uint64_t version = 1; // Current version, incremented on each modification
-    
-    struct DeltaOperation {
+
+    class DeltaOperation {
         bool is_insert;
-        size_t position;
-        uint64_t version;
+        size_t inode;
     };
-    
+
     std::vector<DeltaOperation> operations;
+
 
 public:
 
     void record_insert(size_t inode) {
-        version++;
-        operations.push_back({true, inode, version});
+        operations.push_back({true, inode});
     }
 
     void record_remove(size_t inode) {
-        version++;
-        operations.push_back({false, inode, version});
+        operations.push_back({false, inode});
     }
 
-    size_t stable_inode_to_flouds_inode(uint64_t stable_inode) {
-        size_t flouds_inode = stable_inode & 0xFFFFFFFFFFFF; // Extract the lower 48 bits for the FLOUDS inode
-        uint64_t op_version = stable_inode >> 48; // Extract the upper 16 bits for the version
-        
-        // Apply all operations that occurred after the given version
-        for (const auto& op : operations) {
-            if (op.version > op_version) {
-                if (op.is_insert && op.position <= flouds_inode) {
-                    flouds_inode++;
-                } else if (!op.is_insert && op.position < flouds_inode) {
-                    flouds_inode--;
-                }
-            }
-        }
-        
-        return flouds_inode;
+    size_t stable_inode_to_flouds_inode(size_t stable_inode) {
+        return stable_inode - 1;
     }
 
-    uint64_t flouds_inode_to_stable_inode(size_t flouds_inode) {
-        return (version << 48) | flouds_inode;
+    size_t flouds_inode_to_stable_inode(size_t flouds_inode) {
+        return flouds_inode + 1;
     }
+
 };
