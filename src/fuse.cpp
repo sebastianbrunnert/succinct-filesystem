@@ -72,6 +72,12 @@ static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
             // Found the child - convert FLOUDS position to stable inode
             size_t child_stable = stable_mgr->current_flouds_to_stable(child_flouds);
             
+            // If no stable inode exists, this is a corrupted state
+            if (child_stable == SIZE_MAX) {
+                fuse_reply_err(req, EIO);
+                return;
+            }
+            
             struct fuse_entry_param entry;
             memset(&entry, 0, sizeof(entry));
             
@@ -117,6 +123,13 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
 
     size_t stable_inode = ino - 1;
     size_t flouds_pos = stable_mgr->stable_to_current_flouds(stable_inode);
+    
+    // Check if stable inode is valid
+    if (flouds_pos == SIZE_MAX) {
+        fuse_reply_err(req, ENOENT);
+        return;
+    }
+    
     Inode* inode = file_system_manager->get_inode(stable_inode);
     
     if (flouds->is_folder(flouds_pos)) {
@@ -359,6 +372,12 @@ static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t of
         if (off <= current_off) {
             size_t child_flouds = flouds->child(flouds_pos, i);
             size_t child_stable = stable_mgr->current_flouds_to_stable(child_flouds);
+            
+            // Skip entries without stable inodes (shouldn't happen, but be defensive)
+            if (child_stable == SIZE_MAX) {
+                continue;
+            }
+            
             std::string child_name = flouds->get_name(child_flouds);
             
             stbuf.st_ino = child_stable + 1;  // Convert to FUSE inode
@@ -481,6 +500,11 @@ static void flouds_unlink(fuse_req_t req, fuse_ino_t parent, const char *name) {
             // Convert to stable inode for removal
             size_t child_stable = stable_mgr->current_flouds_to_stable(child_flouds);
             
+            if (child_stable == SIZE_MAX) {
+                fuse_reply_err(req, EIO);
+                return;
+            }
+            
             try {
                 file_system_manager->remove_node(child_stable);
                 file_system_manager->save();
@@ -529,6 +553,11 @@ static void flouds_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name) {
             
             // Convert to stable inode for removal
             size_t child_stable = stable_mgr->current_flouds_to_stable(child_flouds);
+            
+            if (child_stable == SIZE_MAX) {
+                fuse_reply_err(req, EIO);
+                return;
+            }
             
             try {
                 // Remove the directory
