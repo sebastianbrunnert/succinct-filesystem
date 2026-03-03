@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <map>
 #include <vector>
+#include <cstdint>
 
 /**
  * Manages stable inode numbers that remain constant despite FLOUDS structure changes.
@@ -226,70 +227,7 @@ public:
     size_t get_delta_history_size() const {
         return delta_history.size();
     }
-    
-    /**
-     * Serialize the stable inode mappings (delta history is session-specific).
-     */
-    void serialize(char* buffer, size_t* offset) const {
-        // Serialize next_stable_inode
-        std::memcpy(buffer + *offset, &next_stable_inode, sizeof(size_t));
-        *offset += sizeof(size_t);
-        
-        // Serialize stable_to_base_flouds map
-        size_t map_size = stable_to_base_flouds.size();
-        std::memcpy(buffer + *offset, &map_size, sizeof(size_t));
-        *offset += sizeof(size_t);
-        
-        for (const auto& entry : stable_to_base_flouds) {
-            std::memcpy(buffer + *offset, &entry.first, sizeof(size_t));
-            *offset += sizeof(size_t);
-            std::memcpy(buffer + *offset, &entry.second, sizeof(size_t));
-            *offset += sizeof(size_t);
-        }
-        
-        // Delta history is NOT serialized - it's rebuilt fresh on each mount
-    }
-    
-    /**
-     * Deserialize the stable inode mappings (delta history starts fresh).
-     */
-    void deserialize(const char* buffer, size_t* offset) {
-        // Deserialize next_stable_inode
-        std::memcpy(&next_stable_inode, buffer + *offset, sizeof(size_t));
-        *offset += sizeof(size_t);
-        
-        // Deserialize stable_to_base_flouds map
-        size_t map_size;
-        std::memcpy(&map_size, buffer + *offset, sizeof(size_t));
-        *offset += sizeof(size_t);
-        
-        stable_to_base_flouds.clear();
-        for (size_t i = 0; i < map_size; ++i) {
-            size_t stable, base;
-            std::memcpy(&stable, buffer + *offset, sizeof(size_t));
-            *offset += sizeof(size_t);
-            std::memcpy(&base, buffer + *offset, sizeof(size_t));
-            *offset += sizeof(size_t);
-            stable_to_base_flouds[stable] = base;
-        }
-        
-        // Delta history is NOT deserialized - starts empty on each mount
-        delta_history.clear();
-        
-        // Rebuild reverse mapping (since delta history is empty, base = current)
-        rebuild_reverse_mapping();
-    }
-    
-    /**
-     * Get the serialized size.
-     */
-    size_t get_serialized_size() const {
-        size_t size = sizeof(size_t);  // next_stable_inode
-        size += sizeof(size_t);  // map_size
-        size += stable_to_base_flouds.size() * 2 * sizeof(size_t);  // map entries
-        // Delta history is not serialized
-        return size;
-    }
+
 };
 
 #endif // STABLE_INODE_MANAGER_HPP
