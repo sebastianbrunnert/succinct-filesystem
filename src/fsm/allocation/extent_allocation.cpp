@@ -170,7 +170,7 @@ public:
                 size_t block_in_extent = extent_offset / block_size;
                 size_t block_offset = extent_offset % block_size;
                 size_t physical_block = extent.start_block + block_in_extent;
-                size_t to_read = std::min({size - bytes_read, block_size - block_offset, extent_size - extent_offset});
+                size_t to_read = std::min(size - bytes_read, std::min(block_size - block_offset, extent_size - extent_offset));
                 
                 char* temp = new char[block_size];
                 block_device->read_block(physical_block, temp);
@@ -214,7 +214,7 @@ public:
                 size_t block_in_extent = extent_offset / block_size;
                 size_t block_offset = extent_offset % block_size;
                 size_t physical_block = extent.start_block + block_in_extent;
-                size_t to_write = std::min({size - bytes_written, block_size - block_offset, extent_size - extent_offset});
+                size_t to_write = std::min(size - bytes_written, std::min(block_size - block_offset, extent_size - extent_offset));
                 
                 char* temp = new char[block_size];
                 if (block_offset != 0 || to_write < block_size) {
