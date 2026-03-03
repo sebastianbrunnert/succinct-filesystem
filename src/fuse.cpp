@@ -375,6 +375,7 @@ static void flouds_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mo
     try {
         // Create the new directory
         size_t new_node = file_system_manager->add_node(parent_node, name, true, mode);
+        delta_stabilization->record_insert(new_node);
     
         struct fuse_entry_param entry;
         memset(&entry, 0, sizeof(entry));
@@ -408,6 +409,7 @@ static void flouds_create(fuse_req_t req, fuse_ino_t parent, const char *name, m
     try {
         // Create the new file
         size_t new_node = file_system_manager->add_node(parent_node, name, false, mode);
+        delta_stabilization->record_insert(new_node);   
         
         struct fuse_entry_param entry;
         memset(&entry, 0, sizeof(entry));
@@ -450,6 +452,7 @@ static void flouds_unlink(fuse_req_t req, fuse_ino_t parent, const char *name) {
             }
             
             try {
+                delta_stabilization->record_remove(child_node);
                 file_system_manager->remove_node(child_node);
                 file_system_manager->save();
                 fuse_reply_err(req, 0);
@@ -495,6 +498,7 @@ static void flouds_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name) {
             
             try {
                 // Remove the directory
+                delta_stabilization->record_remove(child_node);
                 file_system_manager->remove_node(child_node);
                 file_system_manager->save();
                 fuse_reply_err(req, 0);
