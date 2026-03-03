@@ -44,8 +44,8 @@ class FloudsFileSystem(FileSystem):
     def setup(self):
         os.system("sudo cp ../build/succinct-filesystem ./succinct-filesystem")
         os.system("mkdir tmp")
-        os.system("sudo ./succinct-filesystem flouds_fs.img tmp")
+        os.system("sudo ./succinct-filesystem $(pwd)/flouds.img tmp")
 
     def teardown(self):
         os.system("fusermount -u tmp")
-        os.system("rm -rf tmp flouds_fs.img succinct-filesystem")
+        os.system("rm -rf tmp flouds.img succinct-filesystem")

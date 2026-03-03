@@ -12,10 +12,7 @@
 #include <filesystem>
 
 BlockDevice::BlockDevice(const std::string filename, size_t block_size) : block_size(block_size) {
-    // Use std::filesystem::current_Path() to resolve the absolute path of the file, so that it works correctly even after daemonization (which changes the working directory to /)
-    std::filesystem::path full_path = std::filesystem::current_path() / filename;
-
-    file = open(full_path.c_str(), O_RDWR | O_CREAT, 0644);
+    file = open(filename.c_str(), O_RDWR | O_CREAT, 0644);
 
     if (file == -1) {
         throw std::runtime_error("Could not open or create file");
