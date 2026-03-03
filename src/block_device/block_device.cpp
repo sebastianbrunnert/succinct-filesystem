@@ -11,7 +11,11 @@
 #include <iostream>
 
 BlockDevice::BlockDevice(const std::string filename, size_t block_size) : block_size(block_size) {
-    file = open(filename.c_str(), O_RDWR | O_CREAT, 0644);
+    char cwd[PATH_MAX];
+    getcwd(cwd, sizeof(cwd));
+    std::string full_path = std::string(cwd) + "/" + filename;
+
+    file = open(full_path.c_str(), O_RDWR | O_CREAT, 0644);
 
     if (file == -1) {
         throw std::runtime_error("Could not open or create file");

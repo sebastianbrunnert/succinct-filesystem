@@ -14,7 +14,6 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include <stdlib.h>
 #include "fsm/file_system_manager.hpp"
 #include "fsm/delta/delta_stabilization.hpp"
 
@@ -28,7 +27,7 @@ DeltaStabilization* delta_stabilization = new DeltaStabilization();
  * @param conn Connection information about the FUSE session
  */
 static void flouds_init(void *userdata, struct fuse_conn_info *conn) {
-    const char *image_path = (const char*) userdata;    
+    const char *image_path = (const char*) userdata;
 
     file_system_manager = new FileSystemManager();
     file_system_manager->mount(image_path);
@@ -585,7 +584,7 @@ int main(int argc, char *argv[]) {
 
     // Create a new FUSE session with the parsed arguments and the defined operations.
     // Pass absolute image_path as userdata so it is available in flouds_init
-    se = fuse_session_new(&args, &flouds_operations, sizeof(flouds_operations), (void*) realpath(image_path).c_str());
+    se = fuse_session_new(&args, &flouds_operations, sizeof(flouds_operations), (void*) image_path);
 
     if(se == NULL) {
         // Session could not be created
