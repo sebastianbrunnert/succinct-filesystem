@@ -23,20 +23,32 @@ public:
 
     void record_insert(size_t inode) {
         operations.push_back({true, inode});
+        compact_if_needed();
     }
 
     void record_remove(size_t inode) {
         operations.push_back({false, inode});
+        compact_if_needed();
     }
+    
+private:
+    void compact_if_needed() {
+        // Compact every 100 operations to prevent unbounded growth
+        if (operations.size() >= 100) {
+            operations.clear();
+        }
+    }
+
+public:
 
     size_t stable_inode_to_flouds_inode(size_t stable_inode) {
         size_t flouds_inode = stable_inode - 1;
 
         for (const auto& op : operations) {
             if (op.is_insert && op.inode <= flouds_inode) {
-                flouds_inode--;
+                flouds_inode++;  // Insert shifts positions RIGHT (up)
             } else if (!op.is_insert && op.inode < flouds_inode) {
-                flouds_inode++;
+                flouds_inode--;  // Delete shifts positions LEFT (down)
             }
         }
 
@@ -48,9 +60,9 @@ public:
 
         for (const auto& op : operations) {
             if (op.is_insert && op.inode <= flouds_inode) {
-                stable_inode++;
+                stable_inode--;  // Reverse: subtract inserts that happened
             } else if (!op.is_insert && op.inode < flouds_inode) {
-                stable_inode--;
+                stable_inode++;  // Reverse: add back deleted positions
             }
         }
 
