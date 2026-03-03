@@ -49,53 +49,40 @@ static void flouds_destroy(void *userdata) {
  * @param name The name of the entry being looked up within the parent directory.
  */
 static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
-    // Convert FUSE inode to stable inode (FUSE uses 1-based indexing)
-    size_t parent_stable = parent - 1;
+    // Convert FUSE inode to FLOUDS inode
+    size_t parent_node = parent - 1;
     
     Flouds* flouds = file_system_manager->get_flouds();
-    StableInodeManager* stable_mgr = file_system_manager->get_stable_inode_manager();
-    
-    // Convert stable inode to current FLOUDS position
-    size_t parent_flouds = stable_mgr->stable_to_current_flouds(parent_stable);
     
     // Check if parent is a directory
-    if (!flouds->is_folder(parent_flouds)) {
+    if (!flouds->is_folder(parent_node)) {
         fuse_reply_err(req, ENOTDIR);
         return;
     }
     
     // Search for the child with the given name
-    size_t num_children = flouds->children_count(parent_flouds);
+    size_t num_children = flouds->children_count(parent_node);
     for (size_t i = 0; i < num_children; i++) {
-        size_t child_flouds = flouds->child(parent_flouds, i);
-        if (flouds->get_name(child_flouds) == name) {
-            // Found the child - convert FLOUDS position to stable inode
-            size_t child_stable = stable_mgr->current_flouds_to_stable(child_flouds);
-            
-            // If no stable inode exists, this is a corrupted state
-            if (child_stable == SIZE_MAX) {
-                fuse_reply_err(req, EIO);
-                return;
-            }
-            
+        size_t child_node = flouds->child(parent_node, i);
+        if (flouds->get_name(child_node) == name) {
+            // Found the child
             struct fuse_entry_param entry;
             memset(&entry, 0, sizeof(entry));
             
-            entry.ino = child_stable + 1;  // Convert to FUSE inode (1-based)
+            entry.ino = child_node + 1;  // Convert back to FUSE inode
             entry.attr.st_ino = entry.ino;
-            entry.attr.st_nlink = flouds->is_folder(child_flouds) ? 2 : 1;
+            entry.attr.st_nlink = flouds->is_folder(child_node) ? 2 : 1;
             
-            if (flouds->is_folder(child_flouds)) {
+            if (flouds->is_folder(child_node)) {
                 entry.attr.st_mode = S_IFDIR | 0755;
             } else {
                 entry.attr.st_mode = S_IFREG | 0644;
-                entry.attr.st_size = file_system_manager->get_inode(child_stable)->size;
+                entry.attr.st_size = file_system_manager->get_inode(child_node)->size;
             }
             
-            // With delta-based inode stabilization, inode numbers remain stable
-            // even when the FLOUDS structure changes, so we can safely cache
-            entry.attr_timeout = 1.0;
-            entry.entry_timeout = 1.0;
+            // TODO: Maybe we can use Timeout it we can stabilize the Inodes due to delta coding
+            entry.attr_timeout = 0.0;
+            entry.entry_timeout = 0.0;
             
             fuse_reply_entry(req, &entry);
             return;
@@ -118,24 +105,15 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
     memset(&stbuf, 0, sizeof(stbuf));
     
     Flouds* flouds = file_system_manager->get_flouds();
-    StableInodeManager* stable_mgr = file_system_manager->get_stable_inode_manager();
     stbuf.st_ino = ino;
 
-    size_t stable_inode = ino - 1;
-    size_t flouds_pos = stable_mgr->stable_to_current_flouds(stable_inode);
+    size_t node = ino - 1;
+    Inode* inode = file_system_manager->get_inode(node);
     
-    // Check if stable inode is valid
-    if (flouds_pos == SIZE_MAX) {
-        fuse_reply_err(req, ENOENT);
-        return;
-    }
-    
-    Inode* inode = file_system_manager->get_inode(stable_inode);
-    
-    if (flouds->is_folder(flouds_pos)) {
+    if (flouds->is_folder(node)) {
         stbuf.st_mode = S_IFDIR | inode->mode;
         stbuf.st_nlink = 2;
-    } else if (flouds->is_file(flouds_pos)) {
+    } else if (flouds->is_file(node)) {
         stbuf.st_mode = S_IFREG | inode->mode;
         stbuf.st_nlink = 1;
         stbuf.st_size = inode->size;
@@ -162,11 +140,9 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
  */
 static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi) {    
     Flouds* flouds = file_system_manager->get_flouds();
-    StableInodeManager* stable_mgr = file_system_manager->get_stable_inode_manager();
 
-    size_t stable_inode = ino - 1;
-    size_t flouds_pos = stable_mgr->stable_to_current_flouds(stable_inode);
-    Inode* inode = file_system_manager->get_inode(stable_inode);
+    size_t node = ino - 1;
+    Inode* inode = file_system_manager->get_inode(node);
     
     try {
         // Handle different attribute changes
@@ -174,8 +150,8 @@ static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, in
             inode->mode = attr->st_mode;
         }
         
-        if (to_set & FUSE_SET_ATTR_SIZE && flouds->is_file(flouds_pos)) {
-            file_system_manager->set_file_size(stable_inode, attr->st_size);
+        if (to_set & FUSE_SET_ATTR_SIZE && flouds->is_file(node)) {
+            file_system_manager->set_file_size(node, attr->st_size);
         }
         
         if (to_set & FUSE_SET_ATTR_ATIME) {
@@ -191,10 +167,10 @@ static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, in
         memset(&stbuf, 0, sizeof(stbuf));
         stbuf.st_ino = ino;
         
-        if (flouds->is_folder(flouds_pos)) {
+        if (flouds->is_folder(node)) {
             stbuf.st_mode = S_IFDIR | inode->mode;
             stbuf.st_nlink = 2;
-        } else if (flouds->is_file(flouds_pos)) {
+        } else if (flouds->is_file(node)) {
             stbuf.st_mode = S_IFREG | inode->mode;
             stbuf.st_nlink = 1;
             stbuf.st_size = inode->size;
@@ -220,14 +196,12 @@ static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, in
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
-    size_t stable_inode = ino - 1;
+    size_t node = ino - 1;
     
     Flouds* flouds = file_system_manager->get_flouds();
-    StableInodeManager* stable_mgr = file_system_manager->get_stable_inode_manager();
-    size_t flouds_pos = stable_mgr->stable_to_current_flouds(stable_inode);
     
     // Check if the node exists and is a file
-    if (flouds->is_file(flouds_pos)) {
+    if (flouds->is_file(node)) {
         fuse_reply_open(req, fi);
     } else {
         fuse_reply_err(req, ENOENT);
@@ -244,18 +218,15 @@ static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
-    size_t stable_inode = ino - 1;
+    size_t node = ino - 1;
     
     Flouds* flouds = file_system_manager->get_flouds();
-    StableInodeManager* stable_mgr = file_system_manager->get_stable_inode_manager();
-    size_t flouds_pos = stable_mgr->stable_to_current_flouds(stable_inode);
-    
-    if (!flouds->is_file(flouds_pos)) {
+    if (!flouds->is_file(node)) {
         fuse_reply_err(req, ENOENT);
         return;
     }
 
-    Inode* inode = file_system_manager->get_inode(stable_inode);
+    Inode* inode = file_system_manager->get_inode(node);
     
     // Don't read beyond file size
     if (off >= inode->size) {
@@ -269,7 +240,7 @@ static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
     }
 
     char* buffer = new char[size];
-    file_system_manager->read_file(stable_inode, buffer, size, off);
+    file_system_manager->read_file(node, buffer, size, off);
     
     fuse_reply_buf(req, buffer, size);
     delete[] buffer;
@@ -286,20 +257,17 @@ static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_write(fuse_req_t req, fuse_ino_t ino, const char *buf, size_t size, off_t off, struct fuse_file_info *fi) {
-    size_t stable_inode = ino - 1;
+    size_t node = ino - 1;
     
     Flouds* flouds = file_system_manager->get_flouds();
-    StableInodeManager* stable_mgr = file_system_manager->get_stable_inode_manager();
-    size_t flouds_pos = stable_mgr->stable_to_current_flouds(stable_inode);
-    
-    if (!flouds->is_file(flouds_pos)) {
+    if (!flouds->is_file(node)) {
         fuse_reply_err(req, ENOENT);
         return;
     }
 
     try {
-        Inode* inode = file_system_manager->get_inode(stable_inode);
-        file_system_manager->write_file(stable_inode, buf, size, off);
+        Inode* inode = file_system_manager->get_inode(node);
+        file_system_manager->write_file(node, buf, size, off);
         file_system_manager->save();
         fuse_reply_write(req, size);
     } catch (...) {
@@ -317,13 +285,10 @@ static void flouds_write(fuse_req_t req, fuse_ino_t ino, const char *buf, size_t
  * @param fi Internal file information.
  */
 static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
-    size_t stable_inode = ino - 1;
+    size_t node = ino - 1;
     
     Flouds* flouds = file_system_manager->get_flouds();
-    StableInodeManager* stable_mgr = file_system_manager->get_stable_inode_manager();
-    size_t flouds_pos = stable_mgr->stable_to_current_flouds(stable_inode);
-    
-    if (!flouds->is_folder(flouds_pos)) {
+    if (!flouds->is_folder(node)) {
         fuse_reply_err(req, ENOTDIR);
         return;
     }
@@ -367,21 +332,14 @@ static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t of
     current_off++;
     
     // Add directory entries from FLOUDS
-    size_t num_children = flouds->children_count(flouds_pos);
+    size_t num_children = flouds->children_count(node);
     for (size_t i = 0; i < num_children; i++) {
         if (off <= current_off) {
-            size_t child_flouds = flouds->child(flouds_pos, i);
-            size_t child_stable = stable_mgr->current_flouds_to_stable(child_flouds);
+            size_t child_node = flouds->child(node, i);
+            std::string child_name = flouds->get_name(child_node);
             
-            // Skip entries without stable inodes (shouldn't happen, but be defensive)
-            if (child_stable == SIZE_MAX) {
-                continue;
-            }
-            
-            std::string child_name = flouds->get_name(child_flouds);
-            
-            stbuf.st_ino = child_stable + 1;  // Convert to FUSE inode
-            if (flouds->is_folder(child_flouds)) {
+            stbuf.st_ino = child_node + 1;
+            if (flouds->is_folder(child_node)) {
                 stbuf.st_mode = S_IFDIR;
             } else {
                 stbuf.st_mode = S_IFREG;
@@ -411,22 +369,20 @@ static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t of
  * @param mode The permissions for the new directory.
  */
 static void flouds_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode) {
-    size_t parent_stable = parent - 1;
+    size_t parent_node = parent - 1;
     
     try {
-        // Create the new directory (returns stable inode)
-        size_t new_stable = file_system_manager->add_node(parent_stable, name, true, mode);
+        // Create the new directory
+        size_t new_node = file_system_manager->add_node(parent_node, name, true, mode);
     
         struct fuse_entry_param entry;
         memset(&entry, 0, sizeof(entry));
         
-        // Convert stable inode to FUSE inode (1-based)
-        entry.ino = new_stable + 1;
+        // Convert to FUSE inode
+        entry.ino = new_node + 1;
         entry.attr.st_ino = entry.ino;
         entry.attr.st_mode = S_IFDIR | mode;
         entry.attr.st_nlink = 2;
-        entry.attr_timeout = 1.0;
-        entry.entry_timeout = 1.0;
 
         file_system_manager->save();
 
@@ -446,23 +402,21 @@ static void flouds_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mo
  * @param fi File information structure that can be used to store state about the open file.
  */
 static void flouds_create(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode, struct fuse_file_info *fi) {
-    size_t parent_stable = parent - 1;
+    size_t parent_node = parent - 1;
     
     try {
-        // Create the new file (returns stable inode)
-        size_t new_stable = file_system_manager->add_node(parent_stable, name, false, mode);
+        // Create the new file
+        size_t new_node = file_system_manager->add_node(parent_node, name, false, mode);
         
         struct fuse_entry_param entry;
         memset(&entry, 0, sizeof(entry));
 
-        // Convert stable inode to FUSE inode (1-based)
-        entry.ino = new_stable + 1;
+        // Convert to FUSE inode
+        entry.ino = new_node + 1;
         entry.attr.st_ino = entry.ino;
         entry.attr.st_mode = S_IFREG | mode;
         entry.attr.st_nlink = 1;
         entry.attr.st_size = 0;
-        entry.attr_timeout = 1.0;
-        entry.entry_timeout = 1.0;
         
         file_system_manager->save();
 
@@ -480,33 +434,23 @@ static void flouds_create(fuse_req_t req, fuse_ino_t parent, const char *name, m
  * @param name The name of the file to be deleted.
  */
 static void flouds_unlink(fuse_req_t req, fuse_ino_t parent, const char *name) {
-    size_t parent_stable = parent - 1;
+    size_t parent_node = parent - 1;
     
     Flouds* flouds = file_system_manager->get_flouds();
-    StableInodeManager* stable_mgr = file_system_manager->get_stable_inode_manager();
-    size_t parent_flouds = stable_mgr->stable_to_current_flouds(parent_stable);
     
     // Find the child node with the given name
-    size_t num_children = flouds->children_count(parent_flouds);
+    size_t num_children = flouds->children_count(parent_node);
     for (size_t i = 0; i < num_children; i++) {
-        size_t child_flouds = flouds->child(parent_flouds, i);
-        if (flouds->get_name(child_flouds) == name) {
+        size_t child_node = flouds->child(parent_node, i);
+        if (flouds->get_name(child_node) == name) {
             // Check if it's a file (not a directory)
-            if (flouds->is_folder(child_flouds)) {
+            if (flouds->is_folder(child_node)) {
                 fuse_reply_err(req, EISDIR);
                 return;
             }
             
-            // Convert to stable inode for removal
-            size_t child_stable = stable_mgr->current_flouds_to_stable(child_flouds);
-            
-            if (child_stable == SIZE_MAX) {
-                fuse_reply_err(req, EIO);
-                return;
-            }
-            
             try {
-                file_system_manager->remove_node(child_stable);
+                file_system_manager->remove_node(child_node);
                 file_system_manager->save();
                 fuse_reply_err(req, 0);
             } catch (...) {
@@ -528,40 +472,30 @@ static void flouds_unlink(fuse_req_t req, fuse_ino_t parent, const char *name) {
  * @param name The name of the directory to be deleted.
  */
 static void flouds_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name) {
-    size_t parent_stable = parent - 1;
+    size_t parent_node = parent - 1;
     
     Flouds* flouds = file_system_manager->get_flouds();
-    StableInodeManager* stable_mgr = file_system_manager->get_stable_inode_manager();
-    size_t parent_flouds = stable_mgr->stable_to_current_flouds(parent_stable);
     
     // Find the child node with the given name
-    size_t num_children = flouds->children_count(parent_flouds);
+    size_t num_children = flouds->children_count(parent_node);
     for (size_t i = 0; i < num_children; i++) {
-        size_t child_flouds = flouds->child(parent_flouds, i);
-        if (flouds->get_name(child_flouds) == name) {
+        size_t child_node = flouds->child(parent_node, i);
+        if (flouds->get_name(child_node) == name) {
             // Check if it's a directory (not a file)
-            if (!flouds->is_folder(child_flouds)) {
+            if (!flouds->is_folder(child_node)) {
                 fuse_reply_err(req, ENOTDIR);
                 return;
             }
             
             // Check if directory is empty
-            if (!flouds->is_empty_folder(child_flouds)) {
+            if (!flouds->is_empty_folder(child_node)) {
                 fuse_reply_err(req, ENOTEMPTY);
-                return;
-            }
-            
-            // Convert to stable inode for removal
-            size_t child_stable = stable_mgr->current_flouds_to_stable(child_flouds);
-            
-            if (child_stable == SIZE_MAX) {
-                fuse_reply_err(req, EIO);
                 return;
             }
             
             try {
                 // Remove the directory
-                file_system_manager->remove_node(child_stable);
+                file_system_manager->remove_node(child_node);
                 file_system_manager->save();
                 fuse_reply_err(req, 0);
             } catch (...) {

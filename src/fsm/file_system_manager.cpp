@@ -10,14 +10,11 @@
 #include <iostream>
 
 FileSystemManager::FileSystemManager() 
-    : flouds(nullptr), block_device(nullptr), allocation_manager(nullptr), 
-      inode_manager(nullptr), stable_inode_manager(nullptr) {
+    : flouds(nullptr), block_device(nullptr), allocation_manager(nullptr) {
     std::memset(&header, 0, sizeof(FloudsHeader));
 }
 
 FileSystemManager::~FileSystemManager() {
-    delete stable_inode_manager;
-    delete inode_manager;
     delete flouds;
     delete allocation_manager;
     delete block_device;
@@ -28,7 +25,6 @@ void FileSystemManager::mount(std::string path) {
     this->allocation_manager = create_allocation_manager<ExtentAllocationStrategy>(block_device);
     this->flouds = create_flouds();
     this->inode_manager = create_inode_manager<ArrayInodeManagerStrategy>(allocation_manager);
-    this->stable_inode_manager = new StableInodeManager();
 
     char* buffer = new char[block_device->get_block_size()];
     block_device->read_block(0, buffer);
@@ -84,9 +80,6 @@ void FileSystemManager::unmount() {
 }
 
 void FileSystemManager::save() {
-    // Compact stable inode manager before saving (flatten delta history into base positions)
-    stable_inode_manager->compact();
-    
     // Write FLOUDS data
     size_t flouds_size = flouds->get_serialized_size();
     std::cout << "Saving FLOUDS with size " << flouds_size << " bytes" << std::endl;
@@ -137,53 +130,30 @@ void FileSystemManager::save() {
     std::cout << "Save complete" << std::endl;
 }
 
-size_t FileSystemManager::add_node(size_t parent_stable_inode, std::string name, bool is_folder, uint32_t mode) {
-    // Convert stable parent inode to current FLOUDS position
-    size_t parent_flouds_pos = stable_inode_manager->stable_to_current_flouds(parent_stable_inode);
-    
-    // Insert into FLOUDS structure (this gives us the new node's FLOUDS position)
-    size_t new_flouds_pos = flouds->insert(parent_flouds_pos, name, is_folder);
-    
-    // Record the insertion in delta history (shifts subsequent positions)
-    stable_inode_manager->record_insert(new_flouds_pos);
-    
-    // Assign a new stable inode for this node
-    size_t new_stable_inode = stable_inode_manager->assign_stable_inode(new_flouds_pos);
-    
-    // Create inode metadata (using stable inode as key, not FLOUDS position)
-    Inode* inode = inode_manager->insert_inode(new_stable_inode);
+size_t FileSystemManager::add_node(size_t parent_inode, std::string name, bool is_folder, uint32_t mode) {
+    size_t inode_number = flouds->insert(parent_inode, name, is_folder);
+    Inode* inode = inode_manager->insert_inode(inode_number);
     inode->mode = mode;
-    
-    return new_stable_inode;
+    return inode_number;
 }
 
-void FileSystemManager::remove_node(size_t stable_inode) {
-    // Convert stable inode to current FLOUDS position
-    size_t flouds_pos = stable_inode_manager->stable_to_current_flouds(stable_inode);
-    
-    // Free allocated blocks if any (use stable inode, not FLOUDS position)
-    Inode* inode = inode_manager->get_inode(stable_inode);
+void FileSystemManager::remove_node(size_t inode_number) {
+    Inode* inode = inode_manager->get_inode(inode_number);
     if (inode->allocation_handle != 0) {
         allocation_manager->free(inode->allocation_handle, inode->size);
     }
     
-    // Remove from FLOUDS structure
-    flouds->remove(flouds_pos);
-    
-    // Remove from inode manager (use stable inode as key)
-    inode_manager->remove_inode(stable_inode);
-    
-    // Record the deletion in delta history (shifts subsequent positions)
-    stable_inode_manager->record_delete(flouds_pos, stable_inode);
+    flouds->remove(inode_number);
+    inode_manager->remove_inode(inode_number);
 }
 
-void FileSystemManager::read_file(size_t stable_inode, char* buffer, size_t size, size_t offset) {
-    Inode* node = inode_manager->get_inode(stable_inode);
+void FileSystemManager::read_file(size_t inode, char* buffer, size_t size, size_t offset) {
+    Inode* node = inode_manager->get_inode(inode);
     allocation_manager->read(node->allocation_handle, buffer, size, offset);
 }
 
-void FileSystemManager::write_file(size_t stable_inode, const char* buffer, size_t size, size_t offset) {
-    Inode* node = inode_manager->get_inode(stable_inode);
+void FileSystemManager::write_file(size_t inode, const char* buffer, size_t size, size_t offset) {
+    Inode* node = inode_manager->get_inode(inode);
 
     // If the file is not large enough to write at the given offset, we need to resize it first.
     if (offset + size > node->size) {
@@ -195,13 +165,13 @@ void FileSystemManager::write_file(size_t stable_inode, const char* buffer, size
     node->modification_time = std::time(nullptr);
 }
 
-void FileSystemManager::set_file_size(size_t stable_inode, size_t size) {
-    Inode* node = inode_manager->get_inode(stable_inode);
-    std::cout << "Resizing file with stable inode " << stable_inode << " from size " << node->size << " to size " << size << std::endl;
+void FileSystemManager::set_file_size(size_t inode, size_t size) {
+    Inode* node = inode_manager->get_inode(inode);
+    std::cout << "Resizing file with inode " << inode << " from size " << node->size << " to size " << size << std::endl;
     node->allocation_handle = (node->allocation_handle == 0) ? allocation_manager->allocate(size) : allocation_manager->resize(node->allocation_handle, node->size, size);
     node->size = size;
 }
 
-Inode* FileSystemManager::get_inode(size_t stable_inode) {
-    return inode_manager->get_inode(stable_inode);
+Inode* FileSystemManager::get_inode(size_t inode) {
+    return inode_manager->get_inode(inode);
 }
