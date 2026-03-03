@@ -13,7 +13,7 @@ private:
 
     struct DeltaOperation {
         bool is_insert;
-        size_t inode;
+        size_t inode; // FLOUDS numbers are 0-based, FUSE inodes are 1-based, so this is the FLOUDS inode number
     };
 
     std::vector<DeltaOperation> operations;
@@ -30,17 +30,17 @@ public:
     }
 
     size_t stable_inode_to_flouds_inode(size_t stable_inode) {
-        size_t new_flouds_inode = stable_inode;
+        size_t flouds_inode = stable_inode - 1;
 
         for (const auto& op : operations) {
-            if (op.is_insert && op.inode <= new_flouds_inode) {
-                new_flouds_inode--;
-            } else if (!op.is_insert && op.inode < new_flouds_inode) {
-                new_flouds_inode++;
+            if (op.is_insert && op.inode <= flouds_inode) {
+                flouds_inode--;
+            } else if (!op.is_insert && op.inode < flouds_inode) {
+                flouds_inode++;
             }
         }
 
-        return new_flouds_inode - 1; // Convert to 0-based index for FLOUDS
+        return flouds_inode;
     }
 
     size_t flouds_inode_to_stable_inode(size_t flouds_inode) {
@@ -54,7 +54,7 @@ public:
             }
         }
 
-        return stable_inode + 1; // Convert to 1-based index for FUSE
+        return stable_inode + 1;
     }
 
 };
