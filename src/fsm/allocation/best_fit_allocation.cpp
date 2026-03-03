@@ -38,8 +38,8 @@ public:
         size_t required_blocks = (size + block_device->get_block_size() - 1) / block_device->get_block_size();
         size_t num_blocks = block_bitmap->size();
 
-        // Skip block 0 as it's reserved for the header
-        for (size_t i = 1; i < num_blocks; ++i) {
+        // Skip block 0 as its reserved for the header
+        for (size_t i = 1; i < num_blocks; i++) {
             if (!block_bitmap->access(i)) {
                 if (current_start == SIZE_MAX) {
                     current_start = i;
@@ -62,11 +62,11 @@ public:
         if (best_start == SIZE_MAX) {
             // Allocate at the end
             best_start = num_blocks;
-            for (size_t i = best_start; i < best_start + required_blocks; ++i) {
+            for (size_t i = best_start; i < best_start + required_blocks; i++) {
                 block_bitmap->insert(i, true);
             }
         } else {
-            for (size_t i = best_start; i < best_start + required_blocks; ++i) {
+            for (size_t i = best_start; i < best_start + required_blocks; i++) {
                 block_bitmap->set(i, true);
             }
         }
@@ -77,7 +77,7 @@ public:
     void free(size_t handle, size_t size) override {
         size_t start_block = handle;
         size_t required_blocks = (size + block_device->get_block_size() - 1) / block_device->get_block_size();
-        for (size_t i = start_block; i < start_block + required_blocks; ++i) {
+        for (size_t i = start_block; i < start_block + required_blocks; i++) {
             block_bitmap->set(i, false);
         }
     }
@@ -130,7 +130,7 @@ public:
 
         if (required_new_blocks <= required_old_blocks) {
             // Shrinking: Free blocks from the end of the allocation
-            for (size_t i = handle + required_new_blocks; i < handle + required_old_blocks; ++i) {
+            for (size_t i = handle + required_new_blocks; i < handle + required_old_blocks; i++) {
                 block_bitmap->set(i, false);
             }
             return handle;
@@ -138,7 +138,7 @@ public:
 
         // Check if the blocks after the current allocation are free and can be used for resizing
         bool can_extend = true;
-        for (size_t i = handle + required_old_blocks; i < handle + required_new_blocks; ++i) {
+        for (size_t i = handle + required_old_blocks; i < handle + required_new_blocks; i++) {
             if (block_bitmap->access(i)) {
                 can_extend = false;
                 break;
@@ -146,7 +146,7 @@ public:
         }
         if (can_extend) {
             // Extend the allocation in place
-            for (size_t i = handle + required_old_blocks; i < handle + required_new_blocks; ++i) {
+            for (size_t i = handle + required_old_blocks; i < handle + required_new_blocks; i++) {
                 block_bitmap->set(i, true);
             }
             return handle;

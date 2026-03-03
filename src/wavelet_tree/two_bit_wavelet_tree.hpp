@@ -53,8 +53,7 @@ public:
      * @param position The 0-based position in the wavelet tree to set. Must be less than the size of the wavelet tree.
      * @param symbol The symbol to set at the specified position. Must be in the range [0, 3].
      */
-    void set(size_t position, uint8_t symbol) {
-        // TODO: optimize
+    void set(size_t position, uint8_t symbol) {        
         remove(position);
         insert(position, symbol);
     }

@@ -81,8 +81,8 @@ static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
             }
             
             // TODO: Maybe we can use Timeout it we can stabilize the Inodes due to delta coding
-            entry.attr_timeout = 0.0;
-            entry.entry_timeout = 0.0;
+            entry.attr_timeout = 1.0;
+            entry.entry_timeout = 1.0;
             
             fuse_reply_entry(req, &entry);
             return;

@@ -45,7 +45,7 @@ private:
         // Find existing free extents
         size_t current_start = SIZE_MAX;
         size_t current_size = 0;
-        for (size_t i = 1; i < num_blocks && blocks_allocated < required_blocks; ++i) {
+        for (size_t i = 1; i < num_blocks && blocks_allocated < required_blocks; i++) {
             if (!block_bitmap->access(i)) {
                 if (current_start == SIZE_MAX) {
                     current_start = i;
@@ -54,7 +54,7 @@ private:
             } else if (current_size > (required_blocks - blocks_allocated) / 3) {
                 // Allocate the current extent if it's large enough (at least 1/3 of the remaining blocks needed to avoid fragmentation)
                 extents.push_back({current_start, current_size});
-                for (size_t j = current_start; j < current_start + current_size; ++j) {
+                for (size_t j = current_start; j < current_start + current_size; j++) {
                     block_bitmap->set(j, true);
                 }
                 blocks_allocated += current_size;
@@ -73,16 +73,16 @@ private:
                 size_t start = num_blocks - current_size;
                 size_t total_size = current_size + remaining;
                 extents.push_back({start, total_size});
-                for (size_t j = start; j < num_blocks; ++j) {
+                for (size_t j = start; j < num_blocks; j++) {
                     block_bitmap->set(j, true);
                 }
-                for (size_t j = num_blocks; j < start + total_size; ++j) {
+                for (size_t j = num_blocks; j < start + total_size; j++) {
                     block_bitmap->insert(j, true);
                 }
             } else {
                 // No free blocks at the end, just allocate new blocks
                 extents.push_back({num_blocks, remaining});
-                for (size_t j = num_blocks; j < num_blocks + remaining; ++j) {
+                for (size_t j = num_blocks; j < num_blocks + remaining; j++) {
                     block_bitmap->insert(j, true);
                 }
             }
@@ -119,7 +119,7 @@ public:
         }
         
         for (const auto& extent : it->second) {
-            for (size_t i = extent.start_block; i < extent.start_block + extent.num_blocks; ++i) {
+            for (size_t i = extent.start_block; i < extent.start_block + extent.num_blocks; i++) {
                 block_bitmap->set(i, false);
             }
         }
@@ -255,12 +255,12 @@ public:
                     blocks_to_keep -= extent.num_blocks;
                 } else if (blocks_to_keep > 0) {
                     new_extents.push_back({extent.start_block, blocks_to_keep});
-                    for (size_t i = extent.start_block + blocks_to_keep; i < extent.start_block + extent.num_blocks; ++i) {
+                    for (size_t i = extent.start_block + blocks_to_keep; i < extent.start_block + extent.num_blocks; i++) {
                         block_bitmap->set(i, false);
                     }
                     blocks_to_keep = 0;
                 } else {
-                    for (size_t i = extent.start_block; i < extent.start_block + extent.num_blocks; ++i) {
+                    for (size_t i = extent.start_block; i < extent.start_block + extent.num_blocks; i++) {
                         block_bitmap->set(i, false);
                     }
                 }
@@ -308,7 +308,7 @@ public:
         memcpy(&map_size, buffer + *offset, sizeof(size_t));
         *offset += sizeof(size_t);        
         extent_map.clear();
-        for (size_t i = 0; i < map_size; ++i) {
+        for (size_t i = 0; i < map_size; i++) {
             size_t handle;
             memcpy(&handle, buffer + *offset, sizeof(size_t));
             *offset += sizeof(size_t);            
@@ -316,7 +316,7 @@ public:
             memcpy(&num_extents, buffer + *offset, sizeof(size_t));
             *offset += sizeof(size_t);            
             std::vector<Extent> extents;
-            for (size_t j = 0; j < num_extents; ++j) {
+            for (size_t j = 0; j < num_extents; j++) {
                 Extent extent;
                 memcpy(&extent.start_block, buffer + *offset, sizeof(size_t));
                 *offset += sizeof(size_t);
