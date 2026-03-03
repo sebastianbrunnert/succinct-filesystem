@@ -15,8 +15,10 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include "fsm/file_system_manager.hpp"
+#include "fsm/delta/delta_stabilization.hpp"
 
 FileSystemManager* file_system_manager = nullptr;
+DeltaStabilization* delta_stabilization = new DeltaStabilization();
 
 /**
  * This function is called when the FUSE session is being initialized. It can be used to set up any necessary state or resources for the filesystem.
@@ -49,8 +51,7 @@ static void flouds_destroy(void *userdata) {
  * @param name The name of the entry being looked up within the parent directory.
  */
 static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
-    // Convert FUSE inode to FLOUDS inode
-    size_t parent_node = parent - 1;
+    size_t parent_node = delta_stabilization->stable_inode_to_flouds_inode(parent);
     
     Flouds* flouds = file_system_manager->get_flouds();
     
@@ -69,7 +70,7 @@ static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
             struct fuse_entry_param entry;
             memset(&entry, 0, sizeof(entry));
             
-            entry.ino = child_node + 1;  // Convert back to FUSE inode
+            entry.ino = delta_stabilization->flouds_inode_to_stable_inode(child_node);
             entry.attr.st_ino = entry.ino;
             entry.attr.st_nlink = flouds->is_folder(child_node) ? 2 : 1;
             
@@ -107,7 +108,7 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
     Flouds* flouds = file_system_manager->get_flouds();
     stbuf.st_ino = ino;
 
-    size_t node = ino - 1;
+    size_t node = delta_stabilization->stable_inode_to_flouds_inode(ino);
     Inode* inode = file_system_manager->get_inode(node);
     
     if (flouds->is_folder(node)) {
@@ -141,7 +142,7 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
 static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi) {    
     Flouds* flouds = file_system_manager->get_flouds();
 
-    size_t node = ino - 1;
+    size_t node = delta_stabilization->stable_inode_to_flouds_inode(ino);
     Inode* inode = file_system_manager->get_inode(node);
     
     try {
@@ -196,7 +197,7 @@ static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, in
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
-    size_t node = ino - 1;
+    size_t node = delta_stabilization->stable_inode_to_flouds_inode(ino);
     
     Flouds* flouds = file_system_manager->get_flouds();
     
@@ -218,7 +219,7 @@ static void flouds_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *f
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
-    size_t node = ino - 1;
+    size_t node = delta_stabilization->stable_inode_to_flouds_inode(ino);
     
     Flouds* flouds = file_system_manager->get_flouds();
     if (!flouds->is_file(node)) {
@@ -257,7 +258,7 @@ static void flouds_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, 
  * @param fi Internal file information that can be used to store state about the open file.
  */
 static void flouds_write(fuse_req_t req, fuse_ino_t ino, const char *buf, size_t size, off_t off, struct fuse_file_info *fi) {
-    size_t node = ino - 1;
+    size_t node = delta_stabilization->stable_inode_to_flouds_inode(ino);
     
     Flouds* flouds = file_system_manager->get_flouds();
     if (!flouds->is_file(node)) {
@@ -285,7 +286,7 @@ static void flouds_write(fuse_req_t req, fuse_ino_t ino, const char *buf, size_t
  * @param fi Internal file information.
  */
 static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
-    size_t node = ino - 1;
+    size_t node = delta_stabilization->stable_inode_to_flouds_inode(ino);
     
     Flouds* flouds = file_system_manager->get_flouds();
     if (!flouds->is_folder(node)) {
@@ -338,7 +339,7 @@ static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t of
             size_t child_node = flouds->child(node, i);
             std::string child_name = flouds->get_name(child_node);
             
-            stbuf.st_ino = child_node + 1;
+            stbuf.st_ino = delta_stabilization->flouds_inode_to_stable_inode(child_node);
             if (flouds->is_folder(child_node)) {
                 stbuf.st_mode = S_IFDIR;
             } else {
@@ -369,7 +370,7 @@ static void flouds_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t of
  * @param mode The permissions for the new directory.
  */
 static void flouds_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode) {
-    size_t parent_node = parent - 1;
+    size_t parent_node = delta_stabilization->stable_inode_to_flouds_inode(parent);
     
     try {
         // Create the new directory
@@ -379,7 +380,7 @@ static void flouds_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mo
         memset(&entry, 0, sizeof(entry));
         
         // Convert to FUSE inode
-        entry.ino = new_node + 1;
+        entry.ino = delta_stabilization->flouds_inode_to_stable_inode(new_node);
         entry.attr.st_ino = entry.ino;
         entry.attr.st_mode = S_IFDIR | mode;
         entry.attr.st_nlink = 2;
@@ -402,7 +403,7 @@ static void flouds_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mo
  * @param fi File information structure that can be used to store state about the open file.
  */
 static void flouds_create(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode, struct fuse_file_info *fi) {
-    size_t parent_node = parent - 1;
+    size_t parent_node = delta_stabilization->stable_inode_to_flouds_inode(parent);
     
     try {
         // Create the new file
@@ -411,8 +412,7 @@ static void flouds_create(fuse_req_t req, fuse_ino_t parent, const char *name, m
         struct fuse_entry_param entry;
         memset(&entry, 0, sizeof(entry));
 
-        // Convert to FUSE inode
-        entry.ino = new_node + 1;
+        entry.ino = delta_stabilization->flouds_inode_to_stable_inode(new_node);
         entry.attr.st_ino = entry.ino;
         entry.attr.st_mode = S_IFREG | mode;
         entry.attr.st_nlink = 1;
@@ -434,7 +434,7 @@ static void flouds_create(fuse_req_t req, fuse_ino_t parent, const char *name, m
  * @param name The name of the file to be deleted.
  */
 static void flouds_unlink(fuse_req_t req, fuse_ino_t parent, const char *name) {
-    size_t parent_node = parent - 1;
+    size_t parent_node = delta_stabilization->stable_inode_to_flouds_inode(parent);
     
     Flouds* flouds = file_system_manager->get_flouds();
     
@@ -472,7 +472,7 @@ static void flouds_unlink(fuse_req_t req, fuse_ino_t parent, const char *name) {
  * @param name The name of the directory to be deleted.
  */
 static void flouds_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name) {
-    size_t parent_node = parent - 1;
+    size_t parent_node = delta_stabilization->stable_inode_to_flouds_inode(parent);
     
     Flouds* flouds = file_system_manager->get_flouds();
     
