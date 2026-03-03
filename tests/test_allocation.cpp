@@ -54,6 +54,9 @@ TEST_P(AllocationManagerTest, Resize) {
     size_t handle = allocation_manager->allocate(4096);
     const char* data = "Lorem ipsum dolor sit amet";
     allocation_manager->write(handle, data, strlen(data) + 1, 0);
+
+    // To make it a little more interesting allocate another block to provoke fragmentation
+    size_t handle2 = allocation_manager->allocate(4 * 4096);
     
     // Resize to a larger size
     size_t new_handle = allocation_manager->resize(handle, 4096, 8192);
@@ -101,6 +104,7 @@ INSTANTIATE_TEST_SUITE_P(
     AllocationStrategies,
     AllocationManagerTest,
     ::testing::Values(
-        std::function<AllocationManager*(BlockDevice*)>([](BlockDevice* block_device) { return create_allocation_manager<BestFitAllocationStrategy>(block_device); })
+        std::function<AllocationManager*(BlockDevice*)>([](BlockDevice* block_device) { return create_allocation_manager<BestFitAllocationStrategy>(block_device); }),
+        std::function<AllocationManager*(BlockDevice*)>([](BlockDevice* block_device) { return create_allocation_manager<ExtentAllocationStrategy>(block_device); })
     )
 );

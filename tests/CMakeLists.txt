@@ -32,6 +32,7 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
         ${CMAKE_SOURCE_DIR}/src/flouds/flouds.cpp
         ${CMAKE_SOURCE_DIR}/src/block_device/block_device.cpp
         ${CMAKE_SOURCE_DIR}/src/fsm/allocation/best_fit_allocation.cpp
+        ${CMAKE_SOURCE_DIR}/src/fsm/allocation/extent_allocation.cpp
         ${CMAKE_SOURCE_DIR}/src/fsm/file_system_manager.cpp
         ${CMAKE_SOURCE_DIR}/src/fsm/inode/array_inode.cpp
     )

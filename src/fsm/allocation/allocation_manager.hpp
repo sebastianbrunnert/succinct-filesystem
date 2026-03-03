@@ -91,3 +91,6 @@ template <typename AllocationStrategy> AllocationManager* create_allocation_mana
 
 class BestFitAllocationStrategy;
 template <> AllocationManager* create_allocation_manager<BestFitAllocationStrategy>(BlockDevice* block_device);
+
+class ExtentAllocationStrategy;
+template <> AllocationManager* create_allocation_manager<ExtentAllocationStrategy>(BlockDevice* block_device);

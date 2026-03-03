@@ -22,7 +22,7 @@ FileSystemManager::~FileSystemManager() {
 
 void FileSystemManager::mount(std::string path) {
     this->block_device = new BlockDevice(path);
-    this->allocation_manager = create_allocation_manager<BestFitAllocationStrategy>(block_device);
+    this->allocation_manager = create_allocation_manager<ExtentAllocationStrategy>(block_device);
     this->flouds = create_flouds();
     this->inode_manager = create_inode_manager<ArrayInodeManagerStrategy>(allocation_manager);
 
