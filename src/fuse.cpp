@@ -527,12 +527,11 @@ static void flouds_stats(fuse_req_t req, fuse_ino_t ino) {
     size_t total_blocks = file_system_manager->get_total_blocks();
     size_t used_blocks = file_system_manager->get_used_blocks();
 
-    stbuf->f_bsize = block_size;
-    stbuf->f_frsize = block_size;
-    stbuf->f_blocks = total_blocks;
-    stbuf->f_bfree = total_blocks - used_blocks;
-    stbuf->f_bavail = total_blocks - used_blocks;
-    
+    stbuf.f_bsize = block_size;
+    stbuf.f_frsize = block_size;
+    stbuf.f_blocks = total_blocks;
+    stbuf.f_bfree = total_blocks - used_blocks;
+    stbuf.f_bavail = total_blocks - used_blocks;
     
     fuse_reply_statfs(req, &stbuf);
 }
