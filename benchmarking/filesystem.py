@@ -42,10 +42,10 @@ class Ext4FuseFileSystem(FileSystem):
 
 class FloudsFileSystem(FileSystem):
     def setup(self):
-        os.system("sudo cp ../build/succinct-filesystem ./succinct-filesystem")
+        os.system("sudo cp ../build/succinct_filesystem ./succinct_filesystem")
         os.system("mkdir tmp")
-        os.system("sudo ./succinct-filesystem $(pwd)/flouds.img tmp")
+        os.system("sudo ./succinct_filesystem $(pwd)/flouds.img tmp")
 
     def teardown(self):
         os.system("fusermount -u tmp")
-        os.system("rm -rf tmp flouds.img succinct-filesystem")
+        os.system("rm -rf tmp flouds.img succinct_filesystem")
