@@ -40,7 +40,7 @@ public:
             }
         }
 
-        return new_flouds_inode;
+        return new_flouds_inode - 1; // Convert to 0-based index for FLOUDS
     }
 
     size_t flouds_inode_to_stable_inode(size_t flouds_inode) {
@@ -54,7 +54,7 @@ public:
             }
         }
 
-        return stable_inode;
+        return stable_inode + 1; // Convert to 1-based index for FUSE
     }
 
 };
