@@ -46,10 +46,11 @@ public:
         compact_if_needed();
     }
 
-    void record_remove(size_t inode, size_t stable_inode) {
+    void record_remove(size_t inode) {
         operations.push_back({false, inode});
         
         // Remove the deleted inode's mappings
+        size_t stable_inode = flouds_to_stable[inode];
         stable_to_base_flouds.erase(stable_inode);
         flouds_to_stable.erase(inode);
         
