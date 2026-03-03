@@ -161,6 +161,14 @@ public:
         return new_handle;
     }
 
+    size_t get_total_blocks() const override {
+        return block_bitmap->size();
+    }
+
+    size_t get_used_blocks() const override {
+        return block_bitmap->rank1(block_bitmap->size() - 1);
+    }
+
     void serialize(char* buffer, size_t* offset) override {
         block_bitmap->serialize(buffer, offset);
     }

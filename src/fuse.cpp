@@ -513,6 +513,30 @@ static void flouds_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name) {
     fuse_reply_err(req, ENOENT);
 }
 
+/**
+ * This function is called when filesystem statistics are being requested, such as total size, free space, etc.
+ * 
+ * @param req The request handle that contains information about the statfs request and is used to send the response back to the kernel.
+ * @param ino The inode number of the file or directory for which the statistics are being requested (often ignored for statfs).
+ */
+static void flouds_stats(fuse_req_t req, fuse_ino_t ino) {
+    struct statvfs stbuf;
+    memset(&stbuf, 0, sizeof(stbuf));
+    
+    size_t block_size = file_system_manager->get_block_size();
+    size_t total_blocks = file_system_manager->get_total_blocks();
+    size_t used_blocks = file_system_manager->get_used_blocks();
+
+    stbuf->f_bsize = block_size;
+    stbuf->f_frsize = block_size;
+    stbuf->f_blocks = total_blocks;
+    stbuf->f_bfree = total_blocks - used_blocks;
+    stbuf->f_bavail = total_blocks - used_blocks;
+    
+    
+    fuse_reply_statfs(req, &stbuf);
+}
+
 // This structure defines the operation that our FUSE filesystem supports.
 static const struct fuse_lowlevel_ops flouds_operations = {
     .init = flouds_init,
@@ -527,6 +551,7 @@ static const struct fuse_lowlevel_ops flouds_operations = {
     .read = flouds_read,
     .write = flouds_write,
     .readdir = flouds_readdir,
+    .statfs = flouds_stats,
     .create = flouds_create
 };
 

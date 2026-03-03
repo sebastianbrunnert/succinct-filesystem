@@ -75,6 +75,20 @@ public:
      */
     virtual size_t resize(size_t handle, size_t old_size, size_t new_size) = 0;
 
+    /**
+     * Gets the total number of blocks available on the block device.
+     * 
+     * @return The total number of blocks.
+     */
+    virtual size_t get_total_blocks() const = 0;
+
+    /**
+     * Gets the number of blocks currently allocated on the block device.
+     * 
+     * @return The number of used blocks.
+     */
+    virtual size_t get_used_blocks() const = 0;
+
     virtual void serialize(char* buffer, size_t* offset) override = 0;
     virtual void deserialize(const char* buffer, size_t* offset) override = 0;
     virtual size_t get_serialized_size() override = 0;

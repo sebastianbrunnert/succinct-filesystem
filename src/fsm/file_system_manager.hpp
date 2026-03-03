@@ -131,4 +131,31 @@ public:
      * @return A pointer to the inode structure.
      */
     virtual Inode* get_inode(size_t inode);
+
+    /**
+     * Gets the block size of the block device.
+     * 
+     * @return The block size in bytes.
+     */
+    size_t get_block_size() {
+        return block_device->get_block_size();
+    }
+
+    /**
+     * Gets the total number of blocks available on the block device.
+     * 
+     * @return The total number of blocks.
+     */
+    size_t get_total_blocks() {
+        return allocation_manager->get_total_blocks();
+    }
+
+    /**
+     * Gets the number of blocks currently allocated on the block device.
+     * 
+     * @return The number of used blocks.
+     */
+    size_t get_used_blocks() {
+        return allocation_manager->get_used_blocks();
+    }
 };
