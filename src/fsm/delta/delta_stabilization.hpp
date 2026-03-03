@@ -42,17 +42,13 @@ public:
     }
 
     size_t flouds_inode_to_stable_inode(size_t flouds_inode) {
-        size_t x = flouds_inode;
-        // Undo ops in reverse order
-        for (int i = (int)operations.size() - 1; i >= 0; i--) {
-            const auto& op = operations[i];
-            if (op.is_insert && op.inode <= x) {
-                x--;  // undo the ++
-            } else if (!op.is_insert && op.inode < x) {
-                x++;  // undo the --
+        size_t i = 0;
+        while (true) {
+            if (stable_inode_to_flouds_inode(i) == flouds_inode) {
+                return i;
             }
+            i++;
         }
-        return x + 1;
     }
 
 };
