@@ -47,8 +47,6 @@ void FileSystemManager::mount(std::string path) {
         header.flouds_size = 0;
         header.inode_manager_handle = 0;
         header.inode_manager_size = 0;
-        header.stable_inode_manager_handle = 0;
-        header.stable_inode_manager_size = 0;
         
         delete[] buffer;
         this->save();
@@ -63,15 +61,6 @@ void FileSystemManager::mount(std::string path) {
         size_t offset = 0;
         allocation_manager->deserialize(allocation_manager_buffer, &offset);
         delete[] allocation_manager_buffer;
-        
-        // Load stable inode manager (before FLOUDS, as we need it to understand positions)
-        if (header.stable_inode_manager_size > 0) {
-            char* stable_inode_manager_buffer = new char[header.stable_inode_manager_size];
-            allocation_manager->read(header.stable_inode_manager_handle, stable_inode_manager_buffer, header.stable_inode_manager_size, 0);
-            offset = 0;
-            stable_inode_manager->deserialize(stable_inode_manager_buffer, &offset);
-            delete[] stable_inode_manager_buffer;
-        }
 
         // Load FLOUDS
         char* flouds_buffer = new char[header.flouds_size];
@@ -117,16 +106,6 @@ void FileSystemManager::save() {
     inode_manager->serialize(inode_manager_buffer, &offset);
     allocation_manager->write(inode_manager_handle, inode_manager_buffer, inode_manager_size, 0);
     delete[] inode_manager_buffer;
-    
-    // Write stable inode manager data (mappings only, delta history is session-specific)
-    size_t stable_inode_manager_size = stable_inode_manager->get_serialized_size();
-    std::cout << "Saving stable inode manager with size " << stable_inode_manager_size << " bytes" << std::endl;
-    size_t stable_inode_manager_handle = (header.stable_inode_manager_handle == 0) ? allocation_manager->allocate(stable_inode_manager_size) : allocation_manager->resize(header.stable_inode_manager_handle, header.stable_inode_manager_size, stable_inode_manager_size);
-    char* stable_inode_manager_buffer = new char[stable_inode_manager_size];
-    offset = 0;
-    stable_inode_manager->serialize(stable_inode_manager_buffer, &offset);
-    allocation_manager->write(stable_inode_manager_handle, stable_inode_manager_buffer, stable_inode_manager_size, 0);
-    delete[] stable_inode_manager_buffer;
 
     // Write allocation manager data
     size_t allocation_manager_size = allocation_manager->get_serialized_size();
@@ -153,8 +132,6 @@ void FileSystemManager::save() {
     header.allocation_manager_size = allocation_manager_size;
     header.inode_manager_handle = inode_manager_handle;
     header.inode_manager_size = inode_manager_size;
-    header.stable_inode_manager_handle = stable_inode_manager_handle;
-    header.stable_inode_manager_size = stable_inode_manager_size;
     block_device->write_block(0, (char*) &header);
 
     std::cout << "Save complete" << std::endl;
