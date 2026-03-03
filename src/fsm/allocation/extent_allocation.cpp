@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <map>
 #include <vector>
+#include <algorithm>
 
 /**
  * This class implements an extent-based allocation strategy. It maintains a bitmap to track allocated blocks and allocates multiple contiguous blocks (extents) for each allocation request. Each allocation can consist of multiple non-contiguous extents, eliminating the need for data copying during resize operations.
