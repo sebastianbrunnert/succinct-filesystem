@@ -101,9 +101,11 @@ public:
 private:
     void compact_if_needed() {
         // Compact every 100 operations to prevent unbounded growth
+        /*
         if (operations.size() >= 100) {
             compact();
         }
+        */
     }
     
     void compact() {
