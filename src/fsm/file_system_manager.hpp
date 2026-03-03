@@ -87,6 +87,13 @@ public:
     }
 
     /**
+     * Gets the stable inode manager for converting between stable inodes and FLOUDS positions.
+     */
+    virtual StableInodeManager* get_stable_inode_manager() {
+        return stable_inode_manager;
+    }
+
+    /**
      * Adds a node to the filesystem as a child of the specified parent node.
      * 
      * @param parent_stable_inode The stable inode number of the parent node.
