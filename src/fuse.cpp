@@ -80,7 +80,8 @@ static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
                 entry.attr.st_size = file_system_manager->get_inode(child_node)->size;
             }
             
-            // TODO: Maybe we can use Timeout it we can stabilize the Inodes due to delta coding
+            // With delta-based inode stabilization, inode numbers remain stable
+            // even when the FLOUDS structure changes, so we can safely cache
             entry.attr_timeout = 1.0;
             entry.entry_timeout = 1.0;
             
@@ -383,6 +384,8 @@ static void flouds_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mo
         entry.attr.st_ino = entry.ino;
         entry.attr.st_mode = S_IFDIR | mode;
         entry.attr.st_nlink = 2;
+        entry.attr_timeout = 1.0;
+        entry.entry_timeout = 1.0;
 
         file_system_manager->save();
 
@@ -417,6 +420,8 @@ static void flouds_create(fuse_req_t req, fuse_ino_t parent, const char *name, m
         entry.attr.st_mode = S_IFREG | mode;
         entry.attr.st_nlink = 1;
         entry.attr.st_size = 0;
+        entry.attr_timeout = 1.0;
+        entry.entry_timeout = 1.0;
         
         file_system_manager->save();
 
