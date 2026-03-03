@@ -29,7 +29,7 @@ public:
     }
 
     size_t stable_inode_to_flouds_inode(size_t stable_inode) {
-        size_t new_flouds_inode = stable_inode - 1;
+        size_t new_flouds_inode = stable_inode;
 
         for (const auto& op : operations) {
             if (op.is_insert && op.inode <= new_flouds_inode) {
@@ -43,7 +43,7 @@ public:
     }
 
     size_t flouds_inode_to_stable_inode(size_t flouds_inode) {
-        size_t stable_inode = flouds_inode + 1;
+        size_t stable_inode = flouds_inode;
 
         for (const auto& op : operations) {
             if (op.is_insert && op.inode <= flouds_inode) {
