@@ -124,9 +124,15 @@ public:
     }
 
     size_t resize(size_t handle, size_t old_size, size_t new_size) override {
-        size_t required_old_blocks = (old_size + block_device->get_block_size() - 1) / block_device->get_block_size();
-        size_t required_new_blocks = (new_size + block_device->get_block_size() - 1) / block_device->get_block_size();
+        size_t block_size = block_device->get_block_size();
+        size_t required_old_blocks = (old_size + block_size - 1) / block_size;
+        size_t required_new_blocks = (new_size + block_size - 1) / block_size;
+
         if (required_new_blocks <= required_old_blocks) {
+            // Shrinking: Free blocks from the end of the allocation
+            for (size_t i = handle + required_new_blocks; i < handle + required_old_blocks; ++i) {
+                block_bitmap->set(i, false);
+            }
             return handle;
         }
 
