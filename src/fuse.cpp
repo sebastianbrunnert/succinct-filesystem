@@ -14,6 +14,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 #include "fsm/file_system_manager.hpp"
 #include "fsm/delta/delta_stabilization.hpp"
 

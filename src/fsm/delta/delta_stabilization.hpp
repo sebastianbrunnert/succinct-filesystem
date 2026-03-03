@@ -5,12 +5,12 @@
  * SPDX-License-Identifier: GPL-2.0-only
  */
 
-#include <cstddef>
+#include <vector>
 
 class DeltaStabilization {
 private:
 
-    class DeltaOperation {
+    struct DeltaOperation {
         bool is_insert;
         size_t inode;
     };
