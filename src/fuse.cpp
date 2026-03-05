@@ -146,6 +146,9 @@ static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, in
     Inode* inode = file_system_manager->get_inode(node);
     
     try {
+        // TODO: Prüfen, ob das setzen von Attributszeiten hier Sinn macht oder ob ich das über den FSM machen sollte
+        // TODO: Prüfen, welche Attribute für Dateien und welche für Ordner relevant sind (ggf. splitten)
+
         // Handle different attribute changes
         if (to_set & FUSE_SET_ATTR_MODE) {
             inode->mode = attr->st_mode;
