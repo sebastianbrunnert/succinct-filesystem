@@ -53,7 +53,7 @@ private:
                 }
                 current_size++;
             } else if (current_size > (required_blocks - blocks_allocated) / 3) {
-                // Allocate the current extent if it's large enough (at least 1/3 of the remaining blocks needed to avoid fragmentation)
+                // Allocate the current extent if its large enough (at least 1/3 of the remaining blocks needed to avoid fragmentation)
                 extents.push_back({current_start, current_size});
                 for (size_t j = current_start; j < current_start + current_size; j++) {
                     block_bitmap->set(j, true);

@@ -197,7 +197,7 @@ TEST(FloudsTest, ComplexCase) {
     
     // Remove the now-empty deepfolder
     subfolder1 = flouds->path("/folder2/subfolder1");
-    deepfolder = flouds->child(subfolder1, 2);  // It's the 3rd child
+    deepfolder = flouds->child(subfolder1, 2);  // Its the 3rd child
     flouds->remove(deepfolder);
     subfolder1 = flouds->path("/folder2/subfolder1");
     EXPECT_EQ(flouds->children_count(subfolder1), 2);

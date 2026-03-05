@@ -44,7 +44,7 @@ static void flouds_destroy(void *userdata) {
 }
 
 /**
- * This function is called when a content of a directory is being looked up.
+ * This function is called when a item of a directory is being looked up.
  * 
  * @param req The request handle that contains information about the lookup request and is used to send the response back to the kernel.
  * @param parent The inode number of the parent directory where the lookup is being performed.
@@ -448,7 +448,7 @@ static void flouds_unlink(fuse_req_t req, fuse_ino_t parent, const char *name) {
     for (size_t i = 0; i < num_children; i++) {
         size_t child_node = flouds->child(parent_node, i);
         if (flouds->get_name(child_node) == name) {
-            // Check if it's a file (not a directory)
+            // Check if its a file (not a directory)
             if (flouds->is_folder(child_node)) {
                 fuse_reply_err(req, EISDIR);
                 return;
@@ -487,7 +487,7 @@ static void flouds_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name) {
     for (size_t i = 0; i < num_children; i++) {
         size_t child_node = flouds->child(parent_node, i);
         if (flouds->get_name(child_node) == name) {
-            // Check if it's a directory (not a file)
+            // Check if its a directory (not a file)
             if (!flouds->is_folder(child_node)) {
                 fuse_reply_err(req, ENOTDIR);
                 return;
@@ -538,6 +538,8 @@ static void flouds_stats(fuse_req_t req, fuse_ino_t ino) {
     
     fuse_reply_statfs(req, &stbuf);
 }
+
+// TODO: Rename implementieren
 
 // This structure defines the operation that our FUSE filesystem supports.
 static const struct fuse_lowlevel_ops flouds_operations = {
@@ -632,6 +634,7 @@ int main(int argc, char *argv[]) {
     fuse_daemonize(opts.foreground);
 
     // Block until ctrl-c or fusermount -u is issued.
+    // TODO: Ich möchte kein Multi-Threading
     if (opts.singlethread) {
         ret = fuse_session_loop(se);
     } else {
