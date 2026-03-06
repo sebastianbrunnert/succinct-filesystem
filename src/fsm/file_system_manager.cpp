@@ -79,6 +79,8 @@ void FileSystemManager::unmount() {
 }
 
 void FileSystemManager::save() {
+    // TODO: Dirty flag setzen und nur speichern wenn nötig
+
     // Write FLOUDS data
     size_t flouds_size = flouds->get_serialized_size();
     size_t flouds_handle = (header.flouds_handle == 0) ? allocation_manager->allocate(flouds_size) : allocation_manager->resize(header.flouds_handle, header.flouds_size, flouds_size);
@@ -126,6 +128,7 @@ void FileSystemManager::save() {
 size_t FileSystemManager::add_node(size_t parent_inode, std::string name, bool is_folder, uint32_t mode) {
     size_t inode_number = flouds->insert(parent_inode, name, is_folder);
     Inode* inode = inode_manager->insert_inode(inode_number);
+    // TODO: Optional hier bereits im Sinne der delayed allocation Platz reservieren (Compiler Option)
     inode->mode = mode;
     return inode_number;
 }

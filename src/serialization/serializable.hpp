@@ -18,7 +18,7 @@ class Serializable {
      * Serializes the object into a byte array.
      * 
      * @param buffer The buffer to write the serialized data into. Must be at least get_serialized_size() bytes including the offset.
-     * @param offset The position within the buffer to start writing the serialized data to.
+     * @param offset The position within the buffer to start writing the serialized data to. After the function, this will be the new position after the serialized data.
      */
     virtual void serialize(char* buffer, size_t* offset) = 0;
 
@@ -26,7 +26,7 @@ class Serializable {
      * Deserializes the object from a byte array.
      * 
      * @param buffer The buffer containing the serialized data. Must be at least get_serialized_size() bytes including the offset and must be in the format produced by serialize().
-     * @param offset The position within the buffer to start reading the serialized data from.
+     * @param offset The position within the buffer to start reading the serialized data from. After the function, this will be the new position after the serialized data. 
      */
     virtual void deserialize(const char* buffer, size_t* offset) = 0;
 
