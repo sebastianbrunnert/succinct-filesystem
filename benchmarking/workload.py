@@ -1,5 +1,4 @@
-import os
-
+# Class representing a filebench workload that setups the filesystem, runs the workload and extracts results
 class Workload:
     def __init__(self, name, filesystem):
         self.name = name
@@ -8,11 +7,12 @@ class Workload:
         self.used_space = None
 
     def run(self):
-        import subprocess
+        # Setup the filesystem
         self.filesystem.setup()
         print(f"Running workload {self.name} on {self.filesystem.__class__.__name__}")
 
-        # Run filebench and capture output
+        # Run filebench
+        import subprocess
         result = subprocess.run(
             ["filebench", "-f", f"workloads/{self.name}.f"],
             stdout=subprocess.PIPE,
@@ -39,8 +39,7 @@ class Workload:
         if self.ops_per_sec is not None:
             print(f"Extracted ops/s: {self.ops_per_sec}")
         else:
-            print("Could not extract ops/s value.")
-            print("Filebench output:")
+            print("Could not extract ops/s value. Filebench output:")
             print(output)
 
         self.used_space =  self.filesystem.used_space()

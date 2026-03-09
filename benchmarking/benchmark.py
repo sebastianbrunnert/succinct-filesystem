@@ -3,6 +3,7 @@ import csv
 from filesystem import Ext4FileSystem, Ext4FuseFileSystem, FloudsFileSystem
 from workload import Workload
 
+# Main function that parses arguments, runs workloads, and saves results to csv
 def main():
     default_workloads = ["append_small_1000", "create_dirs_deep_20000", "create_dirs_flat_20000", "create_small_5000", "delete_small_5000", "dirops_deep_5000", "dirops_flat_5000", "fileserver_read_500", "fileserver_read_5000", "micro_rread_1g", "micro_rwrite_1g", "micro_seqread_1g", "micro_seqwrite_1g", "open_close_5000", "remove_dirs_deep_20000", "remove_dirs_flat_20000"]
 
@@ -21,8 +22,10 @@ def main():
     elif args.target == "flouds":
         filesystem = FloudsFileSystem()
     
+    # If no specific workloads provided, run all default workloads
     workloads = args.workloads if args.workloads else default_workloads
 
+    # Run each workload and collect results
     results = []
     for workload_name in workloads:
         workload = Workload(workload_name, filesystem)
