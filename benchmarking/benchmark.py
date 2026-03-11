@@ -32,7 +32,7 @@ def main():
         workload_ops = []
         workload_used_space = []
 
-        for _ in range(5):
+        for _ in range(1):
             workload = Workload(workload_name, filesystem)
             workload.run()
             workload_ops.append(workload.ops_per_sec)
