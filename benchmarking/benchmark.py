@@ -49,10 +49,10 @@ def main():
     # Write results to CSV
     with open(args.output, 'w', newline='') as csvfile:
         fieldnames = ['workload', 'ops_per_sec', 'ops_per_sec_standard_deviation', 'used_space', 'used_space_standard_deviation']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=';')
         writer.writeheader()
         for row in results:
-            writer.writerow(row)
+            writer.writerow(row.replace(".", ","))
 
 if __name__ == "__main__":
     exit(main())

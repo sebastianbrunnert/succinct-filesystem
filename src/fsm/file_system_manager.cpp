@@ -43,7 +43,7 @@ void FileSystemManager::mount(std::string path) {
         header.flouds_size = 0;
         header.inode_manager_handle = 0;
         header.inode_manager_size = 0;
-        
+
         this->save();
     } else {
         // Load existing filesystem
@@ -79,8 +79,6 @@ void FileSystemManager::unmount() {
 }
 
 void FileSystemManager::save() {
-    // TODO: Dirty flag setzen und nur speichern wenn nötig
-
     // Write FLOUDS data
     size_t flouds_size = flouds->get_serialized_size();
     size_t flouds_handle = (header.flouds_handle == 0) ? allocation_manager->allocate(flouds_size) : allocation_manager->resize(header.flouds_handle, header.flouds_size, flouds_size);
@@ -122,13 +120,19 @@ void FileSystemManager::save() {
     header.allocation_manager_size = allocation_manager_size;
     header.inode_manager_handle = inode_manager_handle;
     header.inode_manager_size = inode_manager_size;
-    block_device->write_block(0, (char*) &header);
+    block_device->write_block(0, (char*) &header);    
 }
 
 size_t FileSystemManager::add_node(size_t parent_inode, std::string name, bool is_folder, uint32_t mode) {
     size_t inode_number = flouds->insert(parent_inode, name, is_folder);
     Inode* inode = inode_manager->insert_inode(inode_number);
-    // TODO: Optional hier bereits im Sinne der delayed allocation Platz reservieren (Compiler Option)
+    
+    #ifdef DELAYED_ALLOCATION
+    if (!is_folder) {
+        inode->allocation_handle = allocation_manager->allocate(block_device->get_block_size());
+    }
+    #endif
+
     inode->mode = mode;
     return inode_number;
 }
@@ -163,9 +167,9 @@ void FileSystemManager::write_file(size_t inode, const char* buffer, size_t size
 
 void FileSystemManager::set_file_size(size_t inode, size_t size) {
     Inode* node = inode_manager->get_inode(inode);
-    std::cout << "Resizing file with inode " << inode << " from size " << node->size << " to size " << size << std::endl;
     node->allocation_handle = (node->allocation_handle == 0) ? allocation_manager->allocate(size) : allocation_manager->resize(node->allocation_handle, node->size, size);
     node->size = size;
+    node->modification_time = std::time(nullptr);
 }
 
 Inode* FileSystemManager::get_inode(size_t inode) {

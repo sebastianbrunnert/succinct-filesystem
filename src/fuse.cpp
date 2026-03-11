@@ -81,7 +81,6 @@ static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
                 entry.attr.st_size = file_system_manager->get_inode(child_node)->size;
             }
             
-            // TODO: Maybe we can use Timeout it we can stabilize the Inodes due to delta coding
             entry.attr_timeout = 0.0;
             entry.entry_timeout = 0.0;
             
@@ -139,7 +138,9 @@ static void flouds_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info
  * @param to_set Bitmask indicating which attributes should be changed.
  * @param fi Internal file information.
  */
-static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi) {    
+static void flouds_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi) {
+    std::cout << "setattr called for inode " << ino << " with to_set = " << to_set << std::endl;
+
     Flouds* flouds = file_system_manager->get_flouds();
 
     size_t node = delta_stabilization->stable_inode_to_flouds_inode(ino);
@@ -538,8 +539,6 @@ static void flouds_stats(fuse_req_t req, fuse_ino_t ino) {
     
     fuse_reply_statfs(req, &stbuf);
 }
-
-// TODO: Rename implementieren
 
 // This structure defines the operation that our FUSE filesystem supports.
 static const struct fuse_lowlevel_ops flouds_operations = {
