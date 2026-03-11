@@ -34,17 +34,20 @@ public:
 
         uint64_t log_position = stable_inode >> 48;
         uint64_t inode_number = stable_inode & ((1ULL << 48) - 1);
+        
+        // Convert inode_number back to FLOUDS position for comparison
+        uint64_t flouds_pos = inode_number - 1;
 
-        // Calculate what happend in between the log_position and now and adjust the inode_number accordingly
+        // Calculate what happened between log_position and now and adjust accordingly
         for (size_t i = log_position; i < operations.size(); i++) {
-            if (operations[i].is_insert && operations[i].inode <= inode_number) {
-                inode_number++;
-            } else if (!operations[i].is_insert && operations[i].inode < inode_number) {
-                inode_number--;
+            if (operations[i].is_insert && operations[i].inode <= flouds_pos) {
+                flouds_pos++;
+            } else if (!operations[i].is_insert && operations[i].inode < flouds_pos) {
+                flouds_pos--;
             }
         }
 
-        return inode_number - 1;
+        return flouds_pos;
 
         /*
         WITHOUT CACHING IT WOULD BE:
