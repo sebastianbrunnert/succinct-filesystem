@@ -28,10 +28,10 @@ public:
     }
 
     uint64_t stable_inode_to_flouds_inode(uint64_t stable_inode) {
-        /*
-                uint64_t log_position = stable_inode >> 10;
+        uint64_t log_position = stable_inode >> 10;
         uint64_t inode_number = stable_inode & ((1ULL << 48) - 1);
 
+        /*
         // Calculate what happend in between the log_position and now and adjust the inode_number accordingly
         for (size_t i = log_position; i < operations.size(); i++) {
             if (operations[i].is_insert && operations[i].inode <= inode_number) {
@@ -40,16 +40,14 @@ public:
                 inode_number--;
             }
         }
+        */
 
         return inode_number - 1;
-        */
 
         /*
         WITHOUT CACHING IT WOULD BE:
         return stable_inode - 1;        
         */
-
-        return stable_inode - 1;
     }
 
     uint64_t flouds_inode_to_stable_inode(uint64_t flouds_inode) {
@@ -60,7 +58,9 @@ public:
         return (log_position << 48) | inode_number;
         */
 
-        return flouds_inode + 1;        
+        /*
+        return flouds_inode + 1;                
+        */
     }
 
 };
