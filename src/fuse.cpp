@@ -384,6 +384,8 @@ static void flouds_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mo
         entry.attr.st_ino = entry.ino;
         entry.attr.st_mode = S_IFDIR | mode;
         entry.attr.st_nlink = 2;
+        entry.attr_timeout = 0.0;
+        entry.entry_timeout = 0.0;
 
         file_system_manager->save();
 
@@ -418,6 +420,8 @@ static void flouds_create(fuse_req_t req, fuse_ino_t parent, const char *name, m
         entry.attr.st_mode = S_IFREG | mode;
         entry.attr.st_nlink = 1;
         entry.attr.st_size = 0;
+        entry.attr_timeout = 0.0;
+        entry.entry_timeout = 0.0;
         
         file_system_manager->save();
 
