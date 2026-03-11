@@ -8,7 +8,7 @@
 all: test
 
 configure:
-	cmake -B build --DCMAKE_CXX_FLAGS="-DDELAYED_ALLOCATION"
+	cmake -B build -DCMAKE_CXX_FLAGS="-DDELAYED_ALLOCATION"
 
 build: configure
 	cmake --build build
