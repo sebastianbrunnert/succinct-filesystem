@@ -170,7 +170,8 @@ public:
         size_t size = this->size();
         memcpy(buffer + *offset, &size, sizeof(size_t));
         *offset += sizeof(size_t);
-        for (size_t i = 0; i < words.size(); i++) {
+        size_t num_words = (size + 63) / 64;
+        for (size_t i = 0; i < num_words; i++) {
             memcpy(buffer + *offset, &words[i], sizeof(size_t));
             *offset += sizeof(size_t);
         }
@@ -189,7 +190,7 @@ public:
     }
 
     size_t get_serialized_size() override {
-        return sizeof(size_t) + words.size() * sizeof(size_t);
+        return sizeof(size_t) + (num_bits + 63) / 64 * sizeof(size_t);
     }
 };
 

@@ -1,6 +1,6 @@
 # Succinct Filesystem
 
-A FUSE filesystem implementation using FLOUDS and other succinct data structures.
+FUSE filesystem based on FLOUDS and other succinct data structures
 
 ## Features
 

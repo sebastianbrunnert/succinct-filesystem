@@ -8,6 +8,7 @@
 #include "inode.hpp"
 #include <vector>
 #include <cstring>
+#include <sys/stat.h>
 
 class ArrayInodeManagerStrategy : public InodeManager {
 private:
@@ -33,8 +34,21 @@ public:
         std::memcpy(buffer + *offset, &num_inodes, sizeof(size_t));
         *offset += sizeof(size_t);
         for (const Inode& inode : inodes) {
-            std::memcpy(buffer + *offset, &inode, sizeof(Inode));
-            *offset += sizeof(Inode);
+            // Write each inode manually (because folders dont need allocation_handle and size)
+            std::memcpy(buffer + *offset, &inode.mode, sizeof(uint32_t));
+            *offset += sizeof(uint32_t);
+            std::memcpy(buffer + *offset, &inode.modification_time, sizeof(time_t));
+            *offset += sizeof(time_t);
+            std::memcpy(buffer + *offset, &inode.access_time, sizeof(time_t));
+            *offset += sizeof(time_t);
+            std::memcpy(buffer + *offset, &inode.creation_time, sizeof(time_t));
+            *offset += sizeof(time_t);
+            if (S_ISREG(inode.mode)) {
+                std::memcpy(buffer + *offset, &inode.allocation_handle, sizeof(size_t));
+                *offset += sizeof(size_t);
+                std::memcpy(buffer + *offset, &inode.size, sizeof(size_t));
+                *offset += sizeof(size_t);
+            }
         }
     }
 
@@ -44,13 +58,33 @@ public:
         *offset += sizeof(size_t);
         inodes.resize(num_inodes);
         for (size_t i = 0; i < num_inodes; i++) {
-            std::memcpy(&inodes[i], buffer + *offset, sizeof(Inode));
-            *offset += sizeof(Inode);
+            Inode& inode = inodes[i];
+            std::memcpy(&inode.mode, buffer + *offset, sizeof(uint32_t));
+            *offset += sizeof(uint32_t);
+            std::memcpy(&inode.modification_time, buffer + *offset, sizeof(time_t));
+            *offset += sizeof(time_t);
+            std::memcpy(&inode.access_time, buffer + *offset, sizeof(time_t));
+            *offset += sizeof(time_t);
+            std::memcpy(&inode.creation_time, buffer + *offset, sizeof(time_t));
+            *offset += sizeof(time_t);
+            if (S_ISREG(inode.mode)) {
+                std::memcpy(&inode.allocation_handle, buffer + *offset, sizeof(size_t));
+                *offset += sizeof(size_t);
+                std::memcpy(&inode.size, buffer + *offset, sizeof(size_t));
+                *offset += sizeof(size_t);
+            }
         }
     }
 
     size_t get_serialized_size() override {
-        return sizeof(size_t) + inodes.size() * sizeof(Inode);
+        size_t size = sizeof(size_t);
+        for (const Inode& inode : inodes) {
+            size += sizeof(uint32_t) + 3 * sizeof(time_t);
+            if (S_ISREG(inode.mode)) {
+                size += 2 * sizeof(size_t);
+            }
+        }
+        return size;
     }
 };
 

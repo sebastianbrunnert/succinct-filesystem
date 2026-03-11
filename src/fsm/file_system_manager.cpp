@@ -126,7 +126,6 @@ void FileSystemManager::save() {
 size_t FileSystemManager::add_node(size_t parent_inode, std::string name, bool is_folder, uint32_t mode) {
     size_t inode_number = flouds->insert(parent_inode, name, is_folder);
     Inode* inode = inode_manager->insert_inode(inode_number);
-    
     #ifdef DELAYED_ALLOCATION
     if (!is_folder) {
         inode->allocation_handle = allocation_manager->allocate(block_device->get_block_size());
@@ -134,6 +133,9 @@ size_t FileSystemManager::add_node(size_t parent_inode, std::string name, bool i
     #endif
 
     inode->mode = mode;
+    inode->access_time = std::time(nullptr);
+    inode->creation_time = std::time(nullptr);
+    inode->modification_time = std::time(nullptr);
     return inode_number;
 }
 
@@ -150,6 +152,7 @@ void FileSystemManager::remove_node(size_t inode_number) {
 void FileSystemManager::read_file(size_t inode, char* buffer, size_t size, size_t offset) {
     Inode* node = inode_manager->get_inode(inode);
     allocation_manager->read(node->allocation_handle, buffer, size, offset);
+    node->access_time = std::time(nullptr);
 }
 
 void FileSystemManager::write_file(size_t inode, const char* buffer, size_t size, size_t offset) {
@@ -169,7 +172,6 @@ void FileSystemManager::set_file_size(size_t inode, size_t size) {
     Inode* node = inode_manager->get_inode(inode);
     node->allocation_handle = (node->allocation_handle == 0) ? allocation_manager->allocate(size) : allocation_manager->resize(node->allocation_handle, node->size, size);
     node->size = size;
-    node->modification_time = std::time(nullptr);
 }
 
 Inode* FileSystemManager::get_inode(size_t inode) {

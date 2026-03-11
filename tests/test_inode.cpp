@@ -84,7 +84,7 @@ TEST_P(InodeManagerTest, SerializeDeserialize) {
 
     for(size_t inode_number = 0; inode_number < 10; inode_number++) {
         Inode* inode = inode_manager->insert_inode(inode_number);
-        inode->size = inode_number;
+        inode->creation_time = inode_number;
     }
 
     size_t serialized_size = inode_manager->get_serialized_size();
@@ -99,7 +99,7 @@ TEST_P(InodeManagerTest, SerializeDeserialize) {
     for(size_t inode_number = 0; inode_number < 10; inode_number++) {
         Inode* inode = deserialized_inode_manager->get_inode(inode_number);
         EXPECT_NE(inode, nullptr);
-        EXPECT_EQ(inode->size, inode_number);
+        EXPECT_EQ(inode->creation_time, inode_number);
     }
 }
 

@@ -24,24 +24,25 @@ TEST(FileSystemManagerTest, Mount) {
 
 TEST(FileSystemManagerTest, AddNodeSave) {
     FileSystemManager* fsm = new FileSystemManager();
-    fsm->mount("test_fs.img");
+    fsm->mount("test_fs_addnodesave.img");
     fsm->add_node(0, "test_file.txt", false, 0644);
     fsm->save();
     delete fsm;
 
     FileSystemManager* fsm2 = new FileSystemManager();
-    fsm2->mount("test_fs.img");
+    fsm2->mount("test_fs_addnodesave.img");
     Flouds* flouds = fsm2->get_flouds();
+
     EXPECT_EQ(flouds->children_count(0), 1);
     EXPECT_EQ(flouds->get_name(flouds->child(0, 0)), "test_file.txt");
     delete fsm2;
 
-    std::remove("test_fs.img");
+    std::remove("test_fs_addnodesave.img");
 }
 
 TEST(FileSystemManagerTest, AddNodeRemoveNode) {
     FileSystemManager* fsm = new FileSystemManager();
-    fsm->mount("test_fs.img");
+    fsm->mount("test_fs_addremove.img");
     fsm->add_node(0, "test_file.txt", false, 0644);
     Flouds* flouds = fsm->get_flouds();
     size_t node_id = flouds->child(0, 0);
@@ -52,12 +53,12 @@ TEST(FileSystemManagerTest, AddNodeRemoveNode) {
     EXPECT_EQ(flouds->children_count(0), 0);
 
     delete fsm;
-    std::remove("test_fs.img");
+    std::remove("test_fs_addremove.img");
 }
 
 TEST(FileSystemManagerTest, Metadata) {
     FileSystemManager* fsm = new FileSystemManager();
-    fsm->mount("test_fs.img");
+    fsm->mount("test_fs_metadata.img");
     fsm->add_node(0, "test_file.txt", false, 0644);
     Flouds* flouds = fsm->get_flouds();
     size_t node_id = flouds->child(0, 0);
@@ -66,5 +67,5 @@ TEST(FileSystemManagerTest, Metadata) {
     EXPECT_EQ(fsm->get_inode(node_id)->size, 1024);
 
     delete fsm;
-    std::remove("test_fs.img");
+    std::remove("test_fs_metadata.img");
 }

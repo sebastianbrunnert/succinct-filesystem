@@ -182,6 +182,7 @@ public:
         root_bv->deserialize(buffer, offset);
         left_bv->deserialize(buffer, offset);
         right_bv->deserialize(buffer, offset);
+        
     }
 
     void serialize(char* buffer, size_t* offset) override {
