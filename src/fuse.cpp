@@ -81,8 +81,13 @@ static void flouds_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
                 entry.attr.st_size = file_system_manager->get_inode(child_node)->size;
             }
             
+            #ifdef DELTA_STABILIZATION
             entry.attr_timeout = 1000;
             entry.entry_timeout = 1000;
+            #else 
+            entry.attr_timeout = 0;
+            entry.entry_timeout = 0;
+            #endif
             
             fuse_reply_entry(req, &entry);
             return;
@@ -379,13 +384,17 @@ static void flouds_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mo
         struct fuse_entry_param entry;
         memset(&entry, 0, sizeof(entry));
         
-        // Convert to FUSE inode
         entry.ino = delta_stabilization->flouds_inode_to_stable_inode(new_node);
         entry.attr.st_ino = entry.ino;
         entry.attr.st_mode = S_IFDIR | mode;
         entry.attr.st_nlink = 2;
+        #ifdef DELTA_STABILIZATION
         entry.attr_timeout = 1000;
         entry.entry_timeout = 1000;
+        #else 
+        entry.attr_timeout = 0;
+        entry.entry_timeout = 0;
+        #endif
 
         file_system_manager->save();
 
@@ -420,8 +429,13 @@ static void flouds_create(fuse_req_t req, fuse_ino_t parent, const char *name, m
         entry.attr.st_mode = S_IFREG | mode;
         entry.attr.st_nlink = 1;
         entry.attr.st_size = 0;
+        #ifdef DELTA_STABILIZATION
         entry.attr_timeout = 1000;
         entry.entry_timeout = 1000;
+        #else 
+        entry.attr_timeout = 0;
+        entry.entry_timeout = 0;
+        #endif
         
         file_system_manager->save();
 

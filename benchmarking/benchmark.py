@@ -52,7 +52,9 @@ def main():
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=';')
         writer.writeheader()
         for row in results:
-            writer.writerow(row.replace(".", ","))
+            for col in row:
+                row[col] = row[col].replace(".", ",")
+            writer.writerow(row)
 
 if __name__ == "__main__":
     exit(main())
