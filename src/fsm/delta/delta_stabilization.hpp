@@ -55,8 +55,8 @@ public:
             return 0;
         }
 
-        uint64_t log_position = stable_inode >> 48;
-        uint64_t flouds_position = stable_inode & ((1ULL << 48) - 1) - 1;
+        uint64_t log_position = stable_inode >> 56;
+        uint64_t flouds_position = stable_inode & ((1ULL << 56) - 1) - 1;
 
         // Calculate what happened between log_position and now and adjust accordingly
         for (size_t i = log_position; i < operations.size(); i++) {
@@ -84,7 +84,7 @@ public:
         uint64_t log_position = operations.size();
         uint64_t inode_number = flouds_inode + 1;
 
-        return (log_position << 48) | inode_number;
+        return (log_position << 56) | inode_number;
         #else 
         return flouds_inode + 1;
         #endif
