@@ -1,0 +1,111 @@
+/**
+ * This file is part of the Succinct Filesystem project.
+ * 
+ * Copyright (c) 2026 Sebastian Brunnert <mail@sebastianbrunnert.de>
+ * SPDX-License-Identifier: GPL-2.0-only
+ */
+
+#include <vector>
+#include <stdexcept>
+#include "bitvector.hpp"
+
+extern "C" {
+    #include "../../external/adaptive_dynamic_bitvector/hybridBV.h"
+}
+
+/**
+ * Adaptive dynamic bitvector implementation based on:
+ * 
+ * @misc{Navarro2025AdaptiveDynamicBitvector,
+ * title={(Worst-Case) Optimal Adaptive Dynamic Bitvectors}, 
+ * author={Gonzalo Navarro},
+ * year={2025},
+ * eprint={2405.15088},
+ * archivePrefix={arXiv},
+ * primaryClass={cs.DS},
+ * url={https://arxiv.org/abs/2405.15088}}
+ */
+class AdaptiveDynamicBitVectorStrategy : public BitVector {
+private:
+    hybridBV adaptive;
+
+public:
+    AdaptiveDynamicBitVectorStrategy(size_t n) {
+        if (n == 0) {
+            adaptive = hybridCreate();
+        } else {
+            size_t words = (n + 63) / 64;
+            adaptive = hybridCreateFrom(new uint64_t[words](), n);
+        }
+    }
+
+    ~AdaptiveDynamicBitVectorStrategy() {
+        hybridDestroy(adaptive);
+    }
+
+    void set(size_t position, bool value) override {
+        hybridWrite(adaptive, position, 1);
+    }
+
+    bool access(size_t position) const override {
+        return hybridAccess(adaptive, position);
+    }
+
+    size_t size() const override {
+        return hybridLength(adaptive);
+    }
+
+    size_t rank1(size_t position) const override {
+        return hybridRank(adaptive, position);
+    }
+
+    size_t rank0(size_t position) const override {
+        return hybridRank0(adaptive, position);
+    }
+
+    size_t select1(size_t n) const override {
+        return hybridSelect(adaptive, n);
+    }
+
+    size_t select0(size_t n) const override {
+        return hybridSelect0(adaptive, n);
+    }
+
+    void insert(size_t position, bool value) override {
+        hybridInsert(adaptive, position, value);
+    }
+
+    void remove(size_t position) override {
+        hybridDelete(adaptive, position);
+    }
+
+    void serialize(char* buffer, size_t* offset) override {
+        size_t size = this->size();
+        memcpy(buffer + *offset, &size, sizeof(size_t));
+        *offset += sizeof(size_t);
+        for (size_t i = 0; i < size; i++) {
+            buffer[*offset + i / 8] |= (access(i) ? 1 : 0) << (7 - i % 8);
+        }
+        *offset += (size + 7) / 8;
+    }
+
+    void deserialize(const char* buffer, size_t* offset) override {
+        size_t size;
+        memcpy(&size, buffer + *offset, sizeof(size_t));
+        *offset += sizeof(size_t);
+        for (size_t i = 0; i < size; i++) {
+            bool value = (buffer[*offset + i / 8] >> (7 - i % 8)) & 1;
+            hybridInsert(adaptive, i, value);
+        }
+        *offset += (size + 7) / 8;
+    }
+
+    size_t get_serialized_size() override {
+        return sizeof(size_t) + (size() + 7) / 8;
+    }
+};
+
+template <>
+BitVector* create_bitvector<AdaptiveDynamicBitVectorStrategy>(std::size_t n) {
+    return new AdaptiveDynamicBitVectorStrategy(n);
+}
