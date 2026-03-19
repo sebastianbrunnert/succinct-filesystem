@@ -6,7 +6,7 @@ from workload import Workload
 
 # Main function that parses arguments, runs workloads, and saves results to csv
 def main():
-    default_workloads = ["append_small_1000", "create_dirs_deep_20000", "create_dirs_flat_20000", "create_small_5000", "delete_small_5000", "dirops_deep_5000", "dirops_flat_5000", "fileserver_read_500", "fileserver_read_5000", "fileserver_rw_500", "fileserver_rw_5000", "open_close_5000", "remove_dirs_deep_20000", "remove_dirs_flat_20000", "rread_1g", "rwrite_1g", "seqread_1g", "seqwrite_1g", "varmail_1000"]
+    default_workloads = ["append_small_1000", "create_dirs_deep_100000", "create_dirs_flat_100000", "create_small_5000", "delete_small_5000", "dirops_deep_5000", "dirops_flat_5000", "fileserver_read_500", "fileserver_read_5000", "fileserver_rw_500", "fileserver_rw_5000", "open_close_5000", "remove_dirs_deep_20000", "remove_dirs_flat_20000", "rread_1g", "rwrite_1g", "seqread_1g", "seqwrite_1g", "varmail_1000"]
 
     parser = argparse.ArgumentParser(description="Benchmarking Suite")
     parser.add_argument("--target", required=True, choices=["ext4", "ext4_fuse", "flouds"], help="Target filesystem to benchmark")
