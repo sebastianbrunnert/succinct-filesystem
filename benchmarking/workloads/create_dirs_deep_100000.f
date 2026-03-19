@@ -1,6 +1,6 @@
 set $dir=tmp
-set $ndirs=20000
-set $meandirwidth=50
+set $ndirs=100000
+set $meandirwidth=200
 
 set mode quit firstdone
 
