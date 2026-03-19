@@ -1,7 +1,7 @@
 set $dir=/tmp
 set $nfiles=1000
 set $meandirwidth=1000000
-set $filesize=cvar(type=cvar-gamma,parameters=mean:16384;gamma:1.5)
+set $filesize=16k
 set $nthreads=16
 set $iosize=1m
 set $meanappendsize=16k
