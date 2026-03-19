@@ -1,5 +1,6 @@
 import argparse
 import csv
+import os
 from filesystem import Ext4FileSystem, Ext4FuseFileSystem, FloudsFileSystem
 from workload import Workload
 
@@ -11,8 +12,13 @@ def main():
     parser.add_argument("--target", required=True, choices=["ext4", "ext4_fuse", "flouds"], help="Target filesystem to benchmark")
     parser.add_argument("--workloads", nargs='*', help="Specific workloads to run (default: all)", choices=default_workloads)
     parser.add_argument("--output", help="Output file for results", default="benchmark_results.csv")
+    parser.add_argument("--folder", help="Folder to run benchmarks in (default: current directory)", default=".")
 
     args = parser.parse_args()
+
+    benchmark_folder = os.path.abspath(args.folder)
+    os.makedirs(benchmark_folder, exist_ok=True)
+    os.chdir(benchmark_folder)
 
     filesystem = None
     if args.target == "ext4":
@@ -32,7 +38,7 @@ def main():
         workload_ops = []
         workload_used_space = []
 
-        for _ in range(1):
+        for _ in range(5):
             workload = Workload(workload_name, filesystem)
             workload.run()
             workload_ops.append(workload.ops_per_sec)

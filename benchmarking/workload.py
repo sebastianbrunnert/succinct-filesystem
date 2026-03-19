@@ -1,3 +1,6 @@
+import os
+import subprocess
+
 # Class representing a filebench workload that setups the filesystem, runs the workload and extracts results
 class Workload:
     def __init__(self, name, filesystem):
@@ -12,9 +15,9 @@ class Workload:
         print(f"Running workload {self.name} on {self.filesystem.__class__.__name__}")
 
         # Run filebench
-        import subprocess
+        workload_file = os.path.join(os.path.dirname(__file__), "workloads", f"{self.name}.f")
         result = subprocess.run(
-            ["filebench", "-f", f"workloads/{self.name}.f"],
+            ["filebench", "-f", workload_file],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True
