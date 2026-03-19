@@ -54,7 +54,7 @@ git submodule update --init --recursive
 make build
 ```
 
-##ä Running Tests
+### 3. Running Tests
 
 You can run the tests using CTest:
 
@@ -62,7 +62,7 @@ You can run the tests using CTest:
 make test
 ```
 
-### 3. Linking
+### 4. Linking
 
 Using FUSE, you can mount the filesystem to the folder `tmp` with image file `tmp.img`:
 
