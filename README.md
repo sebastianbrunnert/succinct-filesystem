@@ -18,7 +18,8 @@ FUSE filesystem based on FLOUDS and other succinct data structures
 - CMake (3.14)
 - Git
 - For mounting the filesystem on Linux: libfuse
-- GTest
+- For testing: GTest
+- For benchmarking: Filebench 1.4
 - Best performance on modern processors with BMI2 support
 
 ### Installing
@@ -31,7 +32,7 @@ brew install git cmake googletest
 #### Ubuntu/Debian
 ```bash
 sudo apt update
-sudo apt install git cmake libfuse2 libgtest-dev
+sudo apt install git cmake fuse3 libfuse3-dev libgtest-dev
 ```
 
 ## Usage
